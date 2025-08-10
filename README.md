@@ -1,6 +1,6 @@
 # SamPidia Telegram App
 
-SamPidia Telegram app for  selling and buying Telegram Stars, with withdrawal function from balance. Built with Next.js 15, TypeScript, Tailwind CSS, and Telegram Bot API, this app includes secure invoice generation, purchase history, secret content access after purchase, and refund processing via a Python companion bot. Ideal for Web3 developers, Telegram bot creators, and digital entrepreneurs looking to monetize through Telegram's payment ecosystem.
+SamPidia Telegram app is for  selling and buying Telegram Stars, with withdrawal function from balance. Built with Next.js 15, TypeScript, Tailwind CSS, Python 3.7 or higher, python-telegram-bot library, python-dotenv library, and Telegram Bot API, this app includes secure invoice generation, purchase history, secret content access after purchase, and refund processing via a Python companion bot. Ideal for Web3 developers, Telegram bot creators, and digital entrepreneurs looking to monetize through Telegram's payment ecosystem.
 
 > **Note:** This application is designed to work exclusively within the Telegram ecosystem as a Telegram Mini App. It should be accessed only through Telegram and not directly via a web browser.
 
@@ -19,11 +19,9 @@ SamPidia Telegram app for  selling and buying Telegram Stars, with withdrawal fu
 - Python 3.7+ (for the companion bot)
 - Vercel account (for deployment)
 
-## Getting Started
+## Getting Started with Next.js build
 
-### 1. Clone the repository
-
-```bash
+### 1. Open project folder, in terminal, run
 
 npm install
 ```
@@ -36,7 +34,7 @@ npm run build
 
 > **Note:** The app will only function correctly when accessed through Telegram. 
 
-### 3. Set up the Companion Bot
+### 3. Set up the Python Telegram Companion Bot
 For the companion bot with refund capabilities, visit the separate repository:
 
 ## Deployment
@@ -86,10 +84,7 @@ As this is a Telegram Mini App, it must be deployed and accessed through Telegra
 - [Next.js Documentation](https://nextjs.org/docs)
 
 
-
-
-# Python Telegram Bot with Stars Payment Integration
-A Python Telegram bot demonstrating Stars payment integration. This project showcases how to create a fully functional Telegram bot that handles digital item sales using Telegram Stars as a payment method.
+# Python Telegram Companion Bot with Stars Payment Integration
 
 ## Project Overview
 This bot demonstrates:
@@ -112,21 +107,8 @@ This bot demonstrates:
 - python-dotenv library
 
 ## Getting Started
-### Option 1: Using PyCharm
-1. Open PyCharm
-2. Go to `File > Project from Version Control`
-3. Clone project
-6. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Option 2: Using Terminal
-1. Clone the repository:
-   ```bash
-   git clone project
-   cd telegram-stars-bot
-   ```
+### Using Terminal
+1. Open project folder
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
@@ -195,4 +177,4 @@ The bot includes comprehensive error handling:
 ## Author
 ### SamPidia
 - 🌐 Website: https://sampidia.com
-- - 💻 GitHub: https://github.com/Sampidia/
+- 💻 GitHub: https://github.com/Sampidia/
