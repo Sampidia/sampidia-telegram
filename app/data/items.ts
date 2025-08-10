@@ -17,14 +17,14 @@ export const ITEMS: Item[] = [
     icon: '✨'
   },
   {
-    id: '25',
+    id: 'twentyfive',
     name: '25 Stars 🌟',
     description: '₦450',
     price: 25,
     icon: '🌟'
   },
   {
-    id: '50',
+    id: 'fifty',
     name: '50 Stars ⭐',
     description: '₦910',
     price: 50,

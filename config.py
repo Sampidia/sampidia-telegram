@@ -1,19 +1,19 @@
 from typing import Dict, Any
 
 ITEMS: Dict[str, Dict[str, Any]] = {
-    'ice_cream': {
+    'one': {
         'name': '1 Star ✨',
         'price': 1,
         'description': '₦18',
         'secret': '1stars2025'
     },
-    'cookie': {
+    'twentyfive': {
         'name': '25 Stars 🌟',
         'price': 25,
         'description': '₦450',
         'secret': '25stars2025'
     },
-    'hamburger': {
+    'fifty': {
         'name': '50 Stars ⭐',
         'price': 50,
         'description': '₦910',
