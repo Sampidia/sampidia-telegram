@@ -3,7 +3,7 @@
 
 // Map of item IDs to their secret codes
 export const ITEM_SECRETS: Record<string, string> = {
-  '1': '1stars20255',
+  'one': '1stars20255',
   '25': '25stars2025',
   '50': '50stars2025'
 };

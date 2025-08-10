@@ -10,7 +10,7 @@ export interface Item {
 // Items data - shared between frontend and backend
 export const ITEMS: Item[] = [
   {
-    id: '1',
+    id: 'one',
     name: '1 Star ✨',
     description: '₦1',
     price: 1,
