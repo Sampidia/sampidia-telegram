@@ -2,32 +2,32 @@ from typing import Dict, Any
 
 ITEMS: Dict[str, Dict[str, Any]] = {
     'ice_cream': {
-        'name': 'Ice Cream 🍦',
+        'name': '1 Star ✨',
         'price': 1,
-        'description': 'A delicious virtual ice cream',
-        'secret': 'FROZEN2025'
+        'description': '₦18',
+        'secret': '1stars2025'
     },
     'cookie': {
-        'name': 'Cookie 🍪',
-        'price': 3,
-        'description': 'A sweet virtual cookie',
-        'secret': 'SWEET2025'
+        'name': '25 Stars 🌟',
+        'price': 25,
+        'description': '₦450',
+        'secret': '25stars2025'
     },
     'hamburger': {
-        'name': 'Hamburger 🍔',
-        'price': 5,
-        'description': 'A tasty virtual hamburger',
-        'secret': 'BURGER2025'
+        'name': '50 Stars ⭐',
+        'price': 50,
+        'description': '₦910',
+        'secret': '50stars2025'
     }
 }
 
 MESSAGES = {
     'welcome': (
-        "Welcome to the Digital Store! 🎉\n"
-        "Select an item to purchase with Telegram Stars:"
+        "Welcome to SamPidia! 🎉\n"
+        "Select an item to Sell Telegram Stars:"
     ),
     'help': (
-        "🛍 *Digital Store Bot Help*\n\n"
+        "🛍 *SamPidia Store Bot Help*\n\n"
         "Commands:\n"
         "/start - View available items\n"
         "/help - Show this help message\n"

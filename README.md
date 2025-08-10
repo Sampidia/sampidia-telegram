@@ -1,6 +1,6 @@
 # SamPidia Telegram App
 
-SamPidia Telegram app is for  selling and buying Telegram Stars, with withdrawal function from balance. Built with Next.js 15, TypeScript, Tailwind CSS, Python 3.7 or higher, python-telegram-bot library, python-dotenv library, and Telegram Bot API, this app includes secure invoice generation, purchase history, secret content access after purchase, and refund processing via a Python companion bot. Ideal for Web3 developers, Telegram bot creators, and digital entrepreneurs looking to monetize through Telegram's payment ecosystem.
+SamPidia Telegram app is for  selling and buying Telegram Stars, with withdrawal from balance fction. Built with Next.js 15, TypeScript, Tailwind CSS, Python 3.7 or higher, python-telegram-bot library, python-dotenv library, and Telegram Bot API, this app includes secure invoice generation, purchase history, secret content access after purchase, and refund processing via a Python companion bot. Ideal for Web3 developers, Telegram bot creators, and digital entrepreneurs looking to monetize through Telegram's payment ecosystem.
 
 > **Note:** This application is designed to work exclusively within the Telegram ecosystem as a Telegram Mini App. It should be accessed only through Telegram and not directly via a web browser.
 
