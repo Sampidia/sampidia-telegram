@@ -7,18 +7,18 @@
 :root {
   --tg-theme-bg-color: #ffffff;
   --tg-theme-text-color: #212121;
-  --tg-theme-hint-color: #999999;
+  --tg-theme-hint-color: #920000;
   --tg-theme-link-color: #2678b6;
   --tg-theme-button-color: #3390ec;
-  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-button-text-color: #000000;
   --tg-theme-secondary-bg-color: #f0f0f0;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --tg-theme-bg-color: #18222d;
-    --tg-theme-text-color: #ff0000;
-    --tg-theme-hint-color: #aaaaaa;
+    --tg-theme-text-color: #ffffff;
+    --tg-theme-hint-color: #fcacac;
     --tg-theme-link-color: #62adf5;
     --tg-theme-button-color: #3390ec;
     --tg-theme-button-text-color: #ffffff;

@@ -22,6 +22,8 @@ export interface PaymentRequest {
   created_at: string;
   transaction_id?: string;
   price: number;
+  name: string;
+  description: string;
 }
 
 export interface Purchase {
