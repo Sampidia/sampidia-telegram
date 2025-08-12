@@ -13,7 +13,7 @@ export default async function Page() {
 
   try {
     const { data, error } = await supabase
-      .from('your_table_name') // replace with actual table name
+      .from('purchases') // replace with actual table name
       .select('price')
 
     if (error) {
