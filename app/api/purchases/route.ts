@@ -1,38 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getItemById } from '@/app/data/items';
-import { Purchase } from '@/app/types';
+import { supabase } from '@/lib/supabase';
 
-// Simulated storage for purchases - in a real app, this would be a database
-
-// Using the same in-memory storage reference 
-// @ts-ignore - This is a demo, in a real app we would use a proper data store
-if (!global.purchases) {
-  // @ts-ignore
-  global.purchases = [];
-}
-
-// @ts-ignore
-const purchases = global.purchases;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   try {
     const userId = req.nextUrl.searchParams.get('userId');
     
     if (!userId) {
-      return NextResponse.json({ error: 'Missing userId parameter' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing userId parameter' }, 
+        { status: 400 }
+      );
     }
 
-    // Filter purchases by userId
-    const userPurchases = purchases.filter((purchase: Purchase) => purchase.userId === userId);
+    const { data: purchases, error } = await supabase
+      .from('purchases')
+      .select('*')
+      .eq('user_id', userId)
+      .order('timestamp', { ascending: false });
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: 'Failed to retrieve purchases' }, 
+        { status: 500 }
+      );
+    }
+
+    if (!purchases || purchases.length === 0) {
+      return NextResponse.json(
+        { purchases: [] }, 
+        { status: 200 }
+      );
+    }
+
+    const validatedPurchases = purchases
+      .filter(purchase => {
+        try {
+          return !!getItemById(purchase.item_id);
+        } catch {
+          console.warn(`Invalid item found in purchases: ${purchase.item_id}`);
+          return false;
+        }
+      })
+      .map(purchase => ({
+        userId: purchase.user_id,
+        itemId: purchase.item_id,
+        timestamp: new Date(purchase.timestamp).getTime(),
+        transactionId: purchase.transaction_id,
+      }));
     
-    // Validate all items in purchases exist (in case item data has changed)
-    const validatedPurchases = userPurchases.filter((purchase: Purchase) => {
-      return getItemById(purchase.itemId) !== undefined;
-    });
+    return NextResponse.json(
+      { purchases: validatedPurchases },
+      { status: 200 }
+    );
     
-    return NextResponse.json({ purchases: validatedPurchases });
   } catch (error) {
     console.error('Error retrieving purchases:', error);
-    return NextResponse.json({ error: 'Failed to retrieve purchases' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' }, 
+      { status: 500 }
+    );
   }
-} 
+}

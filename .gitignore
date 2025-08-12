@@ -34,7 +34,9 @@ yarn-error.log*
 .env*
 /.env
 .env
-
+__pycache__/
+*.pyc
+venv/
 
 # vercel
 .vercel
@@ -42,3 +44,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE
+.idea/
+
+# Other
+*.log

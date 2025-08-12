@@ -18,6 +18,24 @@ ITEMS: Dict[str, Dict[str, Any]] = {
         'price': 50,
         'description': '₦910',
         'secret': '50stars2025'
+    },
+    'hundred': {
+        'name': '100 Stars ⭐',
+        'price': 100,
+        'description': '₦1,800',
+        'secret': '100stars2025'
+    },
+    'fivehundred': {
+        'name': '500 Stars ⭐',
+        'price': 500,
+        'description': '₦9,000',
+        'secret': '500stars2025'
+    },
+    'onethousand': {
+        'name': '1000 Stars ⭐',
+        'price': 1000,
+        'description': '₦18,000',
+        'secret': '1000stars2025'
     }
 }
 

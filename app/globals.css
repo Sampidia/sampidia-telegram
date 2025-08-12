@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 
 :root {
   --tg-theme-bg-color: #ffffff;
@@ -13,7 +17,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --tg-theme-bg-color: #18222d;
-    --tg-theme-text-color: #ffffff;
+    --tg-theme-text-color: #ff0000;
     --tg-theme-hint-color: #aaaaaa;
     --tg-theme-link-color: #62adf5;
     --tg-theme-button-color: #3390ec;

@@ -26,8 +26,29 @@ export const ITEMS: Item[] = [
   {
     id: 'fifty',
     name: '50 Stars ⭐',
-    description: '₦910',
+    description: '₦900',
     price: 50,
+    icon: '⭐'
+  },
+  {
+    id: 'hundred',
+    name: '100 Stars ⭐',
+    description: '₦1,800',
+    price: 100,
+    icon: '⭐'
+  },
+  {
+    id: 'fivehundred',
+    name: '500 Stars ⭐',
+    description: '₦9,000',
+    price: 500,
+    icon: '⭐'
+  },
+  {
+    id: 'onethousand',
+    name: '1000 Stars ⭐',
+    description: '₦18,000',
+    price: 1000,
     icon: '⭐'
   }
 ];

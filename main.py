@@ -2,7 +2,9 @@
 A Telegram bot demonstrating Star payments functionality.
 This bot allows users to purchase digital items using Telegram Stars and request refunds.
 """
-
+from supabase_client import supabase
+import signal
+import sys
 import os
 import logging
 import traceback
@@ -20,18 +22,42 @@ from telegram.ext import (
     CallbackContext
 )
 
+from dotenv import load_dotenv
 from config import ITEMS, MESSAGES
 
 # Load environment variables
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 
+# Message texts
+WELCOME_MESSAGE = (
+    "👋 Welcome to SamPidia Telegram Bot!\n\n"
+    "Buy and Sell your Telegram Stars "
+    "and read latest posts, chat with friends, use SamPidia Ai.\n\n"
+    "🔍 Features:\n"
+    "- Buy and Sell Telegram Stars\n"
+    "- Blog Post\n"
+    "- chat and SamPidia A\n\n"
+    "Click the button below to open App!"
+)
+CONTACT_MESSAGE = (
+    "📞 Contact Information\n\n"
+    "Website: https://sampidia.com\n"
+    "Telegram: @pidia2211\n"
+    "Email: sampidia0@gmail.com\n"
+)
+
 # Setup logging
 logging.basicConfig(
+    stream=sys.stdout,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# Constants
+MINI_APP_URL = "https://sampidia-telegram.vercel.app/"
+WELCOME_IMAGE_PATH = 'preview.png'
 
 # Store statistics
 STATS: Dict[str, DefaultDict[str, int]] = {
@@ -40,9 +66,13 @@ STATS: Dict[str, DefaultDict[str, int]] = {
 }
 
 
-async def start(update: Update, context: CallbackContext) -> None:
+async def start(update: Update, context: CallbackContext) :
+    logger.info(f"User {update.effective_user.id} started the bot")
     """Handle /start command - show available items."""
-    keyboard = []
+    keyboard = [[InlineKeyboardButton(
+            "Open Mini App",
+            web_app={"url": MINI_APP_URL}
+        )]]
     for item_id, item in ITEMS.items():
         keyboard.append([InlineKeyboardButton(
             f"{item['name']} - {item['price']} ⭐",
@@ -50,18 +80,34 @@ async def start(update: Update, context: CallbackContext) -> None:
         )])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
+
+    try:
+        with open(WELCOME_IMAGE_PATH, 'rb') as photo:
+            await update.message.reply_photo(
+                photo=photo,
+                caption=WELCOME_MESSAGE,
+                reply_markup=reply_markup
+            )
+    except FileNotFoundError:
+        logger.error(f"Welcome image not found at {WELCOME_IMAGE_PATH}")
     await update.message.reply_text(
         MESSAGES['welcome'],
         reply_markup=reply_markup
     )
 
 
-async def help_command(update: Update, context: CallbackContext) -> None:
+async def help_command(update: Update, context: CallbackContext) :
+    logger.info(f"User {update.effective_user.id} requested help")
     """Handle /help command - show help information."""
     await update.message.reply_text(
         MESSAGES['help'],
         parse_mode='Markdown'
     )
+
+
+async def contact(update: Update, context: CallbackContext):
+    logger.info(f"User {update.effective_user.id} requested contact info")
+    await update.message.reply_text(CONTACT_MESSAGE)
 
 
 async def refund_command(update: Update, context: CallbackContext) -> None:
@@ -151,14 +197,34 @@ async def successful_payment_callback(update: Update, context: CallbackContext) 
     item_id = payment.invoice_payload
     item = ITEMS[item_id]
     user_id = update.effective_user.id
+    telegram_charge_id = payment.telegram_payment_charge_id
 
     # Update statistics
     STATS['purchases'][str(user_id)] += 1
 
     logger.info(
         f"Successful payment from user {user_id} "
-        f"for item {item_id} (charge_id: {payment.telegram_payment_charge_id})"
+        f"for item {item_id} (charge_id: {telegram_charge_id})"
     )
+
+     # Save purchase info including telegram_payment_charge_id to Supabase
+    try:
+        response = supabase.table('purchases').insert({
+            "user_id": str(user_id),
+            "item_id": item_id,
+            "telegram_payment_charge_id": telegram_charge_id,
+            "status": "completed",
+            "price": item['price'],
+            "timestamp": "now()"  # or datetime.now() for python datetime
+        }).execute()
+
+        if response.error:
+            logger.error(f"Supabase insert error: {response.error.message}")
+        else:
+            logger.info(f"Purchase saved to Supabase: {response.data}")
+
+    except Exception as e:
+        logger.error(f"Error saving purchase to Supabase: {str(e)}")
 
     await update.message.reply_text(
         f"Thank you for your purchase! 🎉\n\n"
@@ -174,6 +240,15 @@ async def successful_payment_callback(update: Update, context: CallbackContext) 
 async def error_handler(update: Update, context: CallbackContext) -> None:
     """Handle errors caused by Updates."""
     logger.error(f"Update {update} caused error {context.error}")
+    if update and update.effective_message:
+        await update.effective_message.reply_text(
+            "Sorry, something went wrong. Please try again later."
+        )
+
+
+def signal_handler(signum, frame):
+    logger.info('Signal received, shutting down...')
+    exit(0)
 
 
 def main() -> None:
@@ -184,6 +259,7 @@ def main() -> None:
         # Add handlers
         application.add_handler(CommandHandler("start", start))
         application.add_handler(CommandHandler("help", help_command))
+        application.add_handler(CommandHandler("contact", contact))
         application.add_handler(CommandHandler("refund", refund_command))
         application.add_handler(CallbackQueryHandler(button_handler))
         application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
@@ -192,9 +268,12 @@ def main() -> None:
         # Add error handler
         application.add_error_handler(error_handler)
 
+        # Setup signal handler
+        signal.signal(signal.SIGINT, signal_handler)
+
         # Start the bot
         logger.info("Bot started")
-        application.run_polling()
+        application.run_polling(allowed_updates=Update.ALL_TYPES)
 
     except Exception as e:
         logger.error(f"Error starting bot: {str(e)}")

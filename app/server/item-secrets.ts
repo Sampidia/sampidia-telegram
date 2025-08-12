@@ -5,7 +5,10 @@
 export const ITEM_SECRETS: Record<string, string> = {
   'one': '1stars2025',
   'twentyfive': '25stars2025',
-  'fifty': '50stars2025'
+  'fifty': '50stars2025',
+  'hundred': '100stars2025',
+  'fivehundred': '500stars2025',
+  'onethousand': '1000stars2025'
 };
 
 // Function to get a secret code for an item
