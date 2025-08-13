@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, PostgrestError } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
 interface InvoiceItem {
@@ -14,15 +14,15 @@ interface TelegramInvoiceResponse {
   description?: string;
 }
 
-const BOT_TOKEN = process.env.BOT_TOKEN;
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const BOT_TOKEN = process.env.BOT_TOKEN!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error('Supabase environment variables are missing.');
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function createInvoiceLink(
   item: InvoiceItem,
@@ -45,14 +45,14 @@ async function createInvoiceLink(
 
   const responseData: TelegramInvoiceResponse = await response.json();
 
-  const { error }: { error: PostgrestError | null } = await supabase
+  const { error } = await supabase
     .from('purchases')
     .insert([
       {
         name: item.name,
         description: item.description,
         price: item.price,
-        request_id: requestId
+      
       }
     ]);
 
