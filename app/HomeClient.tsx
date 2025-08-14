@@ -1,5 +1,5 @@
-'use client'
-
+'use client';
+import { supabase } from '@/utils/supabase/client';
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { ITEMS, Item } from '@/app/data/items';
