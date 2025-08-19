@@ -1,0 +1,24 @@
+ // Create new purchase
+    const newPurchase = await prisma.purchase.create({
+      data: {
+        userId,
+        productId,
+        amount,
+        currency: currency || 'USD',
+        status: 'completed'
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: newPurchase
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error('Error creating purchase:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

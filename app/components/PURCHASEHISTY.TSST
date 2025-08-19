@@ -1,0 +1,63 @@
+import React from 'react';
+import { Item } from '@/app/data/items';
+import { Purchase } from '@/app/types';
+
+interface PurchaseHistoryItemProps {
+  purchase: Purchase;
+  item?: Item;
+  onViewSecret: (purchase: Purchase) => void;
+  onWithdraw: (transactionId: string) => void;
+}
+
+export default function PurchaseHistoryItem({ 
+  purchase, 
+  item, 
+  onViewSecret, 
+  onWithdraw 
+}: PurchaseHistoryItemProps) {
+  // Helper function to safely get the item name
+  const getItemName = () => {
+    if (item?.name) {
+      return item.name;
+    }
+    
+    // If purchase has an itemId and it's a string, return it
+    if (typeof purchase.itemId === 'string') {
+      return purchase.itemId;
+    }
+    
+    // If purchase has transactionid, return it
+    if (typeof purchase.transactionid === 'string') {
+      return purchase.transactionid;
+    }
+    
+    // Fallback
+    return 'Unknown Item';
+  };
+
+  return (
+    <div className="flex items-center p-4 bg-white rounded-lg shadow-sm">
+      <div className="text-2xl mr-3">{item?.icon || '🎁'}</div>
+      <div className="flex-1">
+        <h3 className="font-medium">{getItemName()}</h3>
+        <p className="text-xs tg-hint">
+          {new Date(purchase.timestamp).toLocaleString()}
+        </p>
+      </div>
+      <div className="flex flex-col space-y-2">
+        <button 
+          onClick={() => onViewSecret(purchase)}
+          className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          View Secret
+        </button>
+        <button 
+          onClick={() => onWithdraw(purchase.transactionid || '')}
+          className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Withdraw
+        </button>
+      </div>
+    </div>
+  );
+}

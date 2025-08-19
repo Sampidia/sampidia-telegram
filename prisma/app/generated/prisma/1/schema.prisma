@@ -1,0 +1,39 @@
+// database
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL_1")
+}
+
+generator nextjs {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma/1"
+  
+}
+
+model Purchases {
+  id                        String @id @default(auto()) @map("_id") @db.ObjectId
+  uuid                      String @default(uuid())
+  useriddb                  String
+  usernamedb                String @unique
+  firstnamedb               String
+  lastnamedb                String
+  telegramiddb              String @unique
+  itemdiddb                 String
+  requestiddb               String
+  transactioniddb           String @unique
+  timestampdb               String
+  secretdb                  String
+  telegrampaymentchargeiddb String
+  balancedb                 Int    @default(0)
+  statusdb                  String
+  amountdb                  String
+}
+
+// data models
+model User {
+  user      String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  name      String
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+}

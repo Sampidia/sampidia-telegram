@@ -1,0 +1,209 @@
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<IncreasePointsResponse>> {
+  try {
+    // Parse and validate request body
+    const body = await request.json();
+    const parseResult = IncreasePointsSchema.safeParse(body);
+    
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Invalid request data',
+          code: 'VALIDATION_ERROR',
+        },
+        { status: 400 }
+      );
+    }
+
+    const { telegramId } = parseResult.data;
+
+    // Update user balance with proper error handling
+   // const updatedUser = await prisma.user.update({
+   //   where: { telegramId },
+   //   data: { 
+   //     balance: { increment: 1 } // Fixed syntax: added colon
+   //   },
+   //   select: {
+  //      id: true,
+   //     telegramid: true,
+   //     balance: true, // Select the field you're updating
+  //    }
+  //  });
+
+    console.info('[INCREASE_POINTS] Points increased successfully', {
+      userid: updatedUser.id,
+      telegramid,
+      newbalance: updatedUser.balance,
+      timestamp: new Date().toISOString(),
+    });
+
+    return NextResponse.json({
+      success: true,
+      balance: updatedUser.balance, // Return balance instead of points
+      message: 'Points increased successfully'
+    });
+
+  } catch (error) {
+    console.error('[INCREASE_POINTS] Error increasing points:', {
+      error,
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Handle specific Prisma errors
+  //  if (error instanceof PrismaClientKnownRequestError) {
+      // P2025: Record not found
+//      if (error.code === 'P2025') {
+    //    return NextResponse.json(
+//          {
+       //     error: 'User not found',
+//            code: 'USER_NOT_FOUND'
+   //       },
+//          { status: 404 }
+    //    );
+//      }
+
+      // P2002: Unique constraint violation (shouldn't happen here but good practice)
+   //   if (error.code === 'P2002') {
+   //     return NextResponse.json(
+   //       {
+  //          error: 'Database constraint violation',
+   //         code: 'CONSTRAINT_VIOLATION'
+      //    },
+//          { status: 409 }
+//        );
+//      }
+   // }
+
+//    return NextResponse.json(
+ //     {
+//        error: 'Internal server error',
+//        code: 'INTERNAL_ERROR'
+//      },
+//      { status: 500 }
+  //  );
+//  }
+//}
+
+// Next.js App Router configuration
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+
+===============================
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import prisma from '@/lib/prisma';
+
+// Request validation schema
+const IncreasePointsSchema = z.object({
+  telegramId: z.string().min(1, 'Telegram ID is required'),
+});
+
+// Response types for better type safety
+interface IncreasePointsSuccessResponse {
+  success: true;
+  balance: number;
+  message?: string;
+}
+
+interface IncreasePointsErrorResponse {
+  error: string;
+  code?: string;
+}
+
+type IncreasePointsResponse = IncreasePointsSuccessResponse | IncreasePointsErrorResponse;
+
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<IncreasePointsResponse>> {
+  try {
+    // Parse and validate request body
+    const body = await request.json();
+    const parseResult = IncreasePointsSchema.safeParse(body);
+    
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Invalid request data',
+          code: 'VALIDATION_ERROR',
+        },
+        { status: 400 }
+      );
+    }
+
+    const { telegramId } = parseResult.data;
+
+    // Update user balance with proper error handling
+    const updatedUser = await prisma.user.update({
+      where: { telegramId },
+      data: { 
+        balance: { increment: 1 } // Fixed syntax: added colon
+      },
+      select: {
+        id: true,
+        telegramId: true,
+        balance: true, // Select the field you're updating
+      }
+    });
+
+    console.info('[INCREASE_POINTS] Points increased successfully', {
+      userId: updatedUser.id,
+      telegramId,
+      newBalance: updatedUser.balance,
+      timestamp: new Date().toISOString(),
+    });
+
+    return NextResponse.json({
+      success: true,
+      balance: updatedUser.balance, // Return balance instead of points
+      message: 'Points increased successfully'
+    });
+
+  } catch (error) {
+    console.error('[INCREASE_POINTS] Error increasing points:', {
+      error,
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Handle specific Prisma errors
+    if (error instanceof PrismaClientKnownRequestError) {
+      // P2025: Record not found
+      if (error.code === 'P2025') {
+        return NextResponse.json(
+          {
+            error: 'User not found',
+            code: 'USER_NOT_FOUND'
+          },
+          { status: 404 }
+        );
+      }
+
+      // P2002: Unique constraint violation (shouldn't happen here but good practice)
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          {
+            error: 'Database constraint violation',
+            code: 'CONSTRAINT_VIOLATION'
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// Next.js App Router configuration
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
