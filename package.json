@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate --no-engine && tsc && next build",
+    "build": "prisma generate && tsc && next build",
     "start:web": "next start",
     "start:bot": "node dist/bot.js",
     "start": "npx concurrently \"npm run start:web\" \"npm run start:bot\"",
