@@ -11,6 +11,8 @@ import WithdrawalInstructionsModal from '@/app/components/WithdrawalInstructions
 export default function Home() {
     const [initialized, setInitialized] = useState(false);
     const [userId, setUserId] = useState('');
+    const [userFirstName, setUserFirstName] = useState('');
+    const [userTelegramId, setUserTelegramId] = useState('');
     const [userBalance, setUserBalance] = useState(0);
     const [purchases, setPurchases] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -21,7 +23,7 @@ export default function Home() {
     useEffect(() => {
         // Import TWA SDK dynamically to avoid SSR issues
         const initTelegram = async () => {
-            var _a;
+            var _a, _b;
             try {
                 // Dynamic import of the TWA SDK
                 const WebApp = (await import('@twa-dev/sdk')).default;
@@ -36,6 +38,8 @@ export default function Home() {
                         // Access user data directly from the WebApp object
                         const user = WebApp.initDataUnsafe.user;
                         setUserId(((_a = user.id) === null || _a === void 0 ? void 0 : _a.toString()) || '');
+                        setUserFirstName(user.first_name || '');
+                        setUserTelegramId(((_b = user.id) === null || _b === void 0 ? void 0 : _b.toString()) || '');
                     }
                     else {
                         setError('No user data available from Telegram');
@@ -238,6 +242,12 @@ export default function Home() {
       
       {modalState.type === 'withdraw' && (<WithdrawalInstructionsModal onClose={handleCloseModal}/>)}
       
+      {/* User Info Display */}
+      <div className="flex flex-col items-center justify-center mb-4 p-3 bg-gray-800 rounded-lg text-white">
+        <h2 className="text-2xl font-bold mb-2">Welcome back {userFirstName}!</h2>
+        <p className="text-lg">Your Telegram ID: {userTelegramId}</p>
+      </div>
+
       {/* User Balance Display */}
       <div className="flex items-center justify-center mb-4 p-3 bg-gray-800 rounded-lg">
         <span className="text-white text-lg font-semibold">
@@ -246,7 +256,7 @@ export default function Home() {
         <span className="text-yellow-400 text-xl ml-2">⭐</span>
       </div>
       
-      <h1 className="text-2xl font-bold mb-6 text-center">Digital Store</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">SamPidia Store</h1>
       
       <ItemsList items={ITEMS} onPurchase={handlePurchase}/>
       

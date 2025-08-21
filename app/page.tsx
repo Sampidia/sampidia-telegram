@@ -15,6 +15,8 @@ import WithdrawalInstructionsModal from '@/app/components/WithdrawalInstructions
 export default function Home() {
   const [initialized, setInitialized] = useState(false);
   const [userId, setUserId] = useState<string>('');
+  const [userFirstName, setUserFirstName] = useState<string>('');
+  const [userTelegramId, setUserTelegramId] = useState<string>('');
   const [userBalance, setUserBalance] = useState<number>(0);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +48,8 @@ export default function Home() {
             // Access user data directly from the WebApp object
             const user = WebApp.initDataUnsafe.user;
             setUserId(user.id?.toString() || '');
+            setUserFirstName(user.first_name || '');
+            setUserTelegramId(user.id?.toString() || '');
           } else {
             setError('No user data available from Telegram');
             setIsLoading(false);
@@ -279,6 +283,12 @@ export default function Home() {
         />
       )}
       
+      {/* User Info Display */}
+      <div className="flex flex-col items-center justify-center mb-4 p-3 bg-gray-800 rounded-lg text-white">
+        <h2 className="text-2xl font-bold mb-2">Welcome back {userFirstName}!</h2>
+        <p className="text-lg">Your Telegram ID: {userTelegramId}</p>
+      </div>
+
       {/* User Balance Display */}
       <div className="flex items-center justify-center mb-4 p-3 bg-gray-800 rounded-lg">
         <span className="text-white text-lg font-semibold">
@@ -287,7 +297,7 @@ export default function Home() {
         <span className="text-yellow-400 text-xl ml-2">⭐</span>
       </div>
       
-      <h1 className="text-2xl font-bold mb-6 text-center">Digital Store</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">SamPidia Store</h1>
       
       <ItemsList 
         items={ITEMS}

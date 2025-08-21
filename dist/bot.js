@@ -25,12 +25,12 @@ bot.command("start", async (ctx) => {
     // Regular start command
     ctx.reply(`Welcome to SamPidia! 🌟 I am a bot that can accept payments via Telegram Stars. The following commands are available:
 
-/send1 - Purchase 1 Star for ₦1
-/send25 - Purchase 25 Stars for ₦450
-/send50 - Purchase 50 Stars for ₦900
-/send100 - Purchase 100 Stars for ₦1,800
-/send500 - Purchase 500 Stars for ₦9,000
-/send1000 - Purchase 1000 Stars for ₦18,000
+/send1 - Sell 1 Star for $0.008
+/send25 - Sell 25 Stars for $0.2
+/send50 - Sell 50 Stars for $0.4
+/send100 - Sell 100 Stars for $0.8
+/send500 - Sell 500 Stars for $4
+/send1000 - Sell 1000 Stars for $8
 /balance - Check your current balance
 /withdraw - Withdraw your balance
 /refund - Request a refund for a purchase
@@ -71,12 +71,12 @@ const createInvoice = (ctx, itemName, itemDescription, amount) => {
     [{ amount: amount, label: itemName }]);
 };
 // Star purchase commands
-bot.command("send1", (ctx) => createInvoice(ctx, "1 Star ✨", "₦1", 1));
-bot.command("send25", (ctx) => createInvoice(ctx, "25 Stars 🌟", "₦450", 25));
-bot.command("send50", (ctx) => createInvoice(ctx, "50 Stars ⭐", "₦900", 50));
-bot.command("send100", (ctx) => createInvoice(ctx, "100 Stars ⭐", "₦1,800", 100));
-bot.command("send500", (ctx) => createInvoice(ctx, "500 Stars ⭐", "₦9,000", 500));
-bot.command("send1000", (ctx) => createInvoice(ctx, "1000 Stars ⭐", "₦18,000", 1000));
+bot.command("send1", (ctx) => createInvoice(ctx, "1 Star ✨", "$0.008", 1));
+bot.command("send25", (ctx) => createInvoice(ctx, "25 Stars 🌟", "₦0.2", 25));
+bot.command("send50", (ctx) => createInvoice(ctx, "50 Stars ⭐", "$0.4", 50));
+bot.command("send100", (ctx) => createInvoice(ctx, "100 Stars ⭐", "$0.8", 100));
+bot.command("send500", (ctx) => createInvoice(ctx, "500 Stars ⭐", "$4", 500));
+bot.command("send1000", (ctx) => createInvoice(ctx, "1000 Stars ⭐", "$8", 1000));
 /*
   Handles the pre_checkout_query event.
   Telegram sends this event to the bot when a user clicks the payment button.
@@ -125,6 +125,8 @@ bot.on("message:successful_payment", async (ctx) => {
             },
             create: {
                 telegramId: telegramId,
+                firstName: ctx.from.first_name || '',
+                username: ctx.from.username || '',
                 balance: amount,
                 lastSeenAt: new Date()
             }
