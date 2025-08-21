@@ -117,20 +117,27 @@ bot.command("refund", (ctx) => {
 
 Contact our support team and we'll process your refund within 24-48 hours.`);
 });
-// Wrap the bot for Vercel
-const handleUpdate = webhookCallback(bot, "std/http");
+// Create webhook handler for Next.js
+const handler = webhookCallback(bot, "next-js");
 export async function POST(req) {
     try {
         const body = await req.json();
-        return handleUpdate(new Request(req.url, {
-            method: req.method,
-            headers: req.headers,
-            body: JSON.stringify(body),
-        }));
+        const headers = Object.fromEntries(req.headers.entries());
+        let responseStatus = 200;
+        let responseBody = {};
+        const mockRes = {
+            end: (cb) => { if (cb)
+                cb(); },
+            status: (code) => { responseStatus = code; return mockRes; },
+            json: (json) => { responseBody = json; return mockRes; },
+            send: (json) => { responseBody = json; return mockRes; },
+        };
+        await handler({ body, headers }, mockRes);
+        return NextResponse.json(responseBody, { status: responseStatus });
     }
     catch (error) {
-        console.error('Error handling webhook:', error);
-        return NextResponse.json({ error: 'Webhook error' }, { status: 500 });
+        console.error('Webhook error:', error);
+        return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
     }
 }
 // Health check route

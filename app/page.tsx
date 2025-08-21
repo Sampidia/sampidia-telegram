@@ -15,6 +15,7 @@ import WithdrawalInstructionsModal from '@/app/components/WithdrawalInstructions
 export default function Home() {
   const [initialized, setInitialized] = useState(false);
   const [userId, setUserId] = useState<string>('');
+  const [userBalance, setUserBalance] = useState<number>(0);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPurchases, setIsLoadingPurchases] = useState(false);
@@ -68,6 +69,13 @@ export default function Home() {
     initTelegram();
   }, []);
 
+  // Fetch user balance
+  useEffect(() => {
+    if (initialized && userId) {
+      fetchUserBalance();
+    }
+  }, [initialized, userId]);
+
   // Fetch purchase history
   useEffect(() => {
     if (initialized && userId) {
@@ -87,6 +95,33 @@ export default function Home() {
       return () => clearTimeout(timeout);
     }
   }, [isLoadingPurchases]);
+
+  // Set up periodic balance updates
+  useEffect(() => {
+    if (initialized && userId) {
+      // Update balance every 30 seconds
+      const interval = setInterval(() => {
+        fetchUserBalance();
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }
+  }, [initialized, userId]);
+
+  const fetchUserBalance = async () => {
+    if (!userId) return;
+    
+    try {
+      const response = await fetch(`/api/user-balance?userId=${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserBalance(data.balance || 0);
+      }
+    } catch (e) {
+      console.error('Error fetching user balance:', e);
+      // Don't show error for balance fetch, just keep current value
+    }
+  };
 
   const fetchPurchases = async () => {
     if (!userId) return;
@@ -148,6 +183,9 @@ export default function Home() {
           
           // Refresh purchases to show the new purchase
           await fetchPurchases();
+          
+          // Update user balance after successful payment
+          await fetchUserBalance();
         } else if (status === 'failed') {
           alert('❌ Payment failed. Please try again.');
         } else if (status === 'cancelled') {
@@ -240,6 +278,14 @@ export default function Home() {
           onClose={handleCloseModal}
         />
       )}
+      
+      {/* User Balance Display */}
+      <div className="flex items-center justify-center mb-4 p-3 bg-gray-800 rounded-lg">
+        <span className="text-white text-lg font-semibold">
+          Balance: {userBalance.toLocaleString()}
+        </span>
+        <span className="text-yellow-400 text-xl ml-2">⭐</span>
+      </div>
       
       <h1 className="text-2xl font-bold mb-6 text-center">Digital Store</h1>
       
