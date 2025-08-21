@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+"use strict";
 async function main() {
     // ... you will write your Prisma Client queries here
     async function main() {
