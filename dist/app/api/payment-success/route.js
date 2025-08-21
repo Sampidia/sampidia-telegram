@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 // use `prisma` in your application to read and write data in your DB
 export async function POST(req) {
     try {

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Bot, webhookCallback } from "grammy";
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma'
 
-const prisma = new PrismaClient();
 const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
 
 // Handle pre-checkout queries

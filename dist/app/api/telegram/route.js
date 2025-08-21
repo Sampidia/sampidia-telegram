@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Bot, webhookCallback } from "grammy";
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 // Initialize the bot with your token
 const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
 // Command handlers

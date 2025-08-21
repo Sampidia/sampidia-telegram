@@ -1,5 +1,5 @@
 var _a;
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '../app/generated/prisma-client';
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { z } from "zod";
 // Example Zod schema for User creation

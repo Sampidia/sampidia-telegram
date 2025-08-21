@@ -350,14 +350,14 @@ export default function Home() {
             <div className="flex justify-center gap-8 mt-6 mb-8">
               <div className="flex flex-col items-center">
                 <button onClick={() => setShowWithdrawModal(true)} className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl">
-                  <i className="fa-regular fa-paper-plane" style={{ color: 'white' }}></i> {/* Withdraw icon */}
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ color: 'white', width: '24px', height: '24px' }}><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M10.3009 13.6949L20.102 3.89742M10.5795 14.1355L12.8019 18.5804C13.339 19.6545 13.6075 20.1916 13.9458 20.3356C14.2394 20.4606 14.575 20.4379 14.8492 20.2747C15.1651 20.0866 15.3591 19.5183 15.7472 18.3818L19.9463 6.08434C20.2845 5.09409 20.4535 4.59896 20.3378 4.27142C20.2371 3.98648 20.013 3.76234 19.7281 3.66167C19.4005 3.54595 18.9054 3.71502 17.9151 4.05315L5.61763 8.2523C4.48114 8.64037 3.91289 8.83441 3.72478 9.15032C3.56153 9.42447 3.53891 9.76007 3.66389 10.0536C3.80791 10.3919 4.34498 10.6605 5.41912 11.1975L9.86397 13.42C10.041 13.5085 10.1295 13.5527 10.2061 13.6118C10.2742 13.6643 10.3352 13.7253 10.3876 13.7933C10.4468 13.87 10.491 13.9585 10.5795 14.1355Z" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg> {/* Withdraw icon */}
                 </button>
                 <span className="mt-2 text-center text-sm">Withdraw</span>
               </div>
 
               <div className="flex flex-col items-center">
                 <a href="https://t.me/pidia2211?text=1%20want%20to%20send%20stars%20to%20USERNAME?" target="_blank" rel="noopener noreferrer" className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl">
-                  <i className="fa-solid fa-arrow-right" style={{ color: 'white' }}></i> {/* Send icon */}
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ color: 'white', width: '24px', height: '24px' }}><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M20.7639 12H10.0556M3 8.00003H5.5M4 12H5.5M4.5 16H5.5M9.96153 12.4896L9.07002 15.4486C8.73252 16.5688 8.56376 17.1289 8.70734 17.4633C8.83199 17.7537 9.08656 17.9681 9.39391 18.0415C9.74792 18.1261 10.2711 17.8645 11.3175 17.3413L19.1378 13.4311C20.059 12.9705 20.5197 12.7402 20.6675 12.4285C20.7961 12.1573 20.7961 11.8427 20.6675 11.5715C20.5197 11.2598 20.059 11.0295 19.1378 10.5689L11.3068 6.65342C10.2633 6.13168 9.74156 5.87081 9.38789 5.95502C9.0808 6.02815 8.82627 6.24198 8.70128 6.53184C8.55731 6.86569 8.72427 7.42461 9.05819 8.54246L9.96261 11.5701C10.0137 11.7411 10.0392 11.8266 10.0493 11.9137C10.0583 11.991 10.0582 12.069 10.049 12.1463C10.0387 12.2334 10.013 12.3188 9.96153 12.4896Z" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg> {/* Send icon */}
                 </a>
                 <span className="mt-2 text-center text-sm">Send</span>
               </div>
@@ -370,7 +370,7 @@ export default function Home() {
                     behavior: "smooth",
                 });
             }}>
-                  <i className="fa-solid fa-plus" style={{ color: 'white' }}></i> {/* Add icon */}
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <title></title> <g id="Complete"> <g data-name="add" id="add-2"> <g> <line fill="none" stroke="#ffffff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="12" x2="12" y1="19" y2="5"></line> <line fill="none" stroke="#ffffff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="5" x2="19" y1="12" y2="12"></line> </g> </g> </g> </g></svg> {/* Add icon */}
                 </button>
                 <span className="mt-2 text-center text-sm">Add</span>
               </div>
@@ -378,7 +378,7 @@ export default function Home() {
               <div className="flex flex-col items-center">
                 <a href="https://t.me/pidia2211" // Replace with actual support chat link
          target="_blank" rel="noopener noreferrer" className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl">
-                  <i className="fa-regular fa-comment-dots" style={{ color: 'white' }}></i> {/* Chat/Support icon */}
+                  <svg version="1.1" id="Icons" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" xmlSpace="preserve" style={{ fill: '#000000' }}><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M5,17.4v-3.5C5,7.9,9.9,3,16,3s11,4.9,11,10.9l0,3.5"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M27,15v3.4C27,24.3,22.1,29,16,29l0-2l3,0"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M9,22v-8c-2.2,0-4,1.8-4,4S6.8,22,9,22z"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M23,14v8c2.2,0,4-1.8,4-4S25.2,14,23,14z"></path> </g></svg> {/* Chat/Support icon */}
                 </a>
                 <span className="mt-2 text-center text-sm">Support</span>
               </div>
@@ -429,16 +429,16 @@ export default function Home() {
           </>)}
         
         {activeTab === 2 && (<>
-          <div className="w-full" style={{ height: 'calc(100vh - 72px)' }}>
+          <div className="w-full h-full" style={{ height: 'calc(100vh - 120px)' }}>
             <iframe src="https://sampidia.com" title="Tab 2" className="w-full h-full border-none"/>
           </div>
           </>)}
 
-        {activeTab === 3 && (<div className="w-full" style={{ height: 'calc(100vh - 72px)' }}>
+        {activeTab === 3 && (<div className="w-full h-full" style={{ height: 'calc(100vh - 120px)' }}>
             <iframe src="https://connect.sampidia.com" title="Tab 3" className="w-full h-full border-none"/>
           </div>)}
 
-        {activeTab === 4 && (<div className="w-full" style={{ height: 'calc(100vh - 72px)' }}>
+        {activeTab === 4 && (<div className="w-full h-full" style={{ height: 'calc(100vh - 120px)' }}>
             <iframe src="https://ai.sampidia.com" title="Tab 4" className="w-full h-full border-none"/>
           </div>)}
       </div>

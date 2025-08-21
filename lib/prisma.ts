@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient } from '../app/generated/prisma-client';
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { z } from "zod";
 
