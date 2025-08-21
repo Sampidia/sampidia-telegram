@@ -26,12 +26,10 @@ export async function GET(req: NextRequest) {
     });
     
     // Validate all items in purchases exist (in case item data has changed)
-    const validatedPurchases = await Promise.all(
-      userPurchases.map(async (purchase: any) => {
-        const item = await getItemById(purchase.itemId);
-        return item ? purchase : null;
-      })
-    );
+    const validatedPurchases = userPurchases.map((purchase: any) => {
+      const item = getItemById(purchase.itemId);
+      return item ? purchase : null;
+    });
     
     // Filter out null values (purchases with invalid items)
     const filteredPurchases = validatedPurchases.filter((purchase: any) => purchase !== null);

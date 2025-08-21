@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 app.use(express.json());
 
 // Create an instance of the `Bot` class and pass your bot token to it.
-const bot = new Bot(process.env.BOT_TOKEN || "7813322141:AAEqawGpmn0hfsImfQ3hlQqJQKSStvTMF6E");
+const bot = new Bot(process.env.BOT_TOKEN);
 // You can now register listeners on your bot object `bot`.
 // grammY will call the listeners when users send messages to your bot.
 /*
@@ -171,6 +171,13 @@ app.use("/webhook", webhookCallback(bot, "express"));
 
 app.get("/", (req, res) => res.send("SamPidia Bot running with webhook"));
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`SamPidia Bot server running on port ${port}`);
+  try {
+    // Set webhook
+    await bot.api.setWebhook(process.env.WEBHOOK_URL);
+    console.log("Webhook set successfully!");
+  } catch (error) {
+    console.error("Error setting webhook:", error);
+  }
 });
