@@ -84,7 +84,8 @@ export default function Home() {
       setPurchases(data.purchases || []);
     } catch (e) {
       console.error('Error fetching purchases:', e);
-      setError('Failed to load purchase history');
+      // Don't set a page-level error, just show an empty purchase history.
+      setPurchases([]);
     } finally {
       setIsLoading(false);
     }
