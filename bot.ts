@@ -3,13 +3,13 @@ import { Bot, webhookCallback } from "grammy";
 import { PrismaClient } from '@prisma/client';
 
 const app = express();
-const port = 3000;
+const port = 3001;
 const prisma = new PrismaClient();
 
 app.use(express.json());
 
 // Create an instance of the `Bot` class and pass your bot token to it.
-const bot = new Bot(process.env.BOT_TOKEN!);
+const bot = new Bot(process.env.BOT_TOKEN || "7813322141:AAEqawGpmn0hfsImfQ3hlQqJQKSStvTMF6E");
 
 /*
   Handles the /start command.
@@ -172,11 +172,17 @@ app.get("/", (req, res) => res.send("SamPidia Bot running with webhook"));
 
 app.listen(port, async () => {
   console.log(`SamPidia Bot server running on port ${port}`);
-  try {
-    // Set webhook
-    await bot.api.setWebhook(process.env.WEBHOOK_URL!);
-    console.log("Webhook set successfully!");
-  } catch (error) {
-    console.error("Error setting webhook:", error);
+  console.log(`Bot token: ${process.env.BOT_TOKEN ? 'Set' : 'Using default'}`);
+  
+  // Only set webhook if WEBHOOK_URL is provided
+  if (process.env.WEBHOOK_URL) {
+    try {
+      await bot.api.setWebhook(process.env.WEBHOOK_URL);
+      console.log("Webhook set successfully to:", process.env.WEBHOOK_URL);
+    } catch (error) {
+      console.error("Error setting webhook:", error);
+    }
+  } else {
+    console.log("No WEBHOOK_URL provided, webhook not set");
   }
 });

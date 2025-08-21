@@ -17,6 +17,7 @@ export default function Home() {
   const [userId, setUserId] = useState<string>('');
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPurchases, setIsLoadingPurchases] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalState, setModalState] = useState<{
     type: 'purchase' | 'withdraw' | null;
@@ -73,7 +74,7 @@ export default function Home() {
   }, [initialized, userId]);
 
   const fetchPurchases = async () => {
-    setIsLoading(true);
+    setIsLoadingPurchases(true);
     try {
       const response = await fetch(`/api/purchases?userId=${userId}`);
       if (!response.ok) {
@@ -87,7 +88,7 @@ export default function Home() {
       // Don't set a page-level error, just show an empty purchase history.
       setPurchases([]);
     } finally {
-      setIsLoading(false);
+      setIsLoadingPurchases(false);
     }
   };
 
@@ -227,13 +228,13 @@ export default function Home() {
     setModalState({ type: null });
   };
 
-  // Loading state
-  if (!initialized || isLoading) {
+  // Loading state - only show for initialization, not for purchase history
+  if (!initialized) {
     return <LoadingState />;
   }
 
   // Error state (including not in Telegram)
-  if (error) {
+  if (error && error !== 'Failed to load purchase history') {
     return <ErrorState error={error} onRetry={handleRetry} />;
   }
 
@@ -265,6 +266,7 @@ export default function Home() {
         items={ITEMS}
         onViewSecret={revealSecret}
         onWithdraw={handleWithdraw}
+        isLoading={isLoadingPurchases}
       />
     </div>
   );
