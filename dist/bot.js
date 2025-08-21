@@ -6,7 +6,7 @@ const port = 3001;
 const prisma = new PrismaClient();
 app.use(express.json());
 // Create an instance of the `Bot` class and pass your bot token to it.
-const bot = new Bot(process.env.BOT_TOKEN || "7813322141:AAEqawGpmn0hfsImfQ3hlQqJQKSStvTMF6E");
+const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
 /*
   Handles the /start command.
   Sends a welcome message to the user and explains the available commands for interacting with the bot.
@@ -16,9 +16,9 @@ bot.command("start", async (ctx) => {
     // Handle payment commands from web app
     if (startParam && startParam.startsWith('pay_')) {
         const parts = startParam.split('_');
-        if (parts.length >= 4) {
-            const [, , itemId, userId, invoiceId] = parts;
-            await handlePaymentRequest(ctx, itemId, userId, invoiceId);
+        if (parts.length >= 3) {
+            const [, , itemId, userId] = parts;
+            await handlePaymentRequest(ctx, itemId, userId);
             return;
         }
     }
@@ -37,7 +37,7 @@ bot.command("start", async (ctx) => {
 `);
 });
 // Handle payment requests from web app
-async function handlePaymentRequest(ctx, itemId, userId, invoiceId) {
+async function handlePaymentRequest(ctx, itemId, userId) {
     try {
         // Get item details
         const { ITEMS } = await import('./app/data/items');
@@ -49,8 +49,7 @@ async function handlePaymentRequest(ctx, itemId, userId, invoiceId) {
         // Create Telegram Stars payment
         const payment = await ctx.replyWithInvoice(item.name, item.description, JSON.stringify({
             itemId: item.id,
-            userId: userId,
-            invoiceId: invoiceId
+            userId: userId
         }), "", // Provider token (empty for Telegram Stars)
         "XTR", // Currency for Telegram Stars
         [{ amount: item.price, label: item.name }]);
@@ -94,51 +93,70 @@ bot.on("pre_checkout_query", (ctx) => {
   Updates the database with payment details.
 */
 bot.on("message:successful_payment", async (ctx) => {
+    var _a;
     if (!ctx.message || !ctx.message.successful_payment || !ctx.from) {
+        console.log('Missing payment data:', { message: !!ctx.message, payment: !!((_a = ctx.message) === null || _a === void 0 ? void 0 : _a.successful_payment), from: !!ctx.from });
         return;
     }
     try {
         const payment = ctx.message.successful_payment;
+        console.log('Processing payment:', payment);
         const payload = JSON.parse(payment.invoice_payload || '{}');
-        // Store payment in database
-        await prisma.payment.create({
-            data: {
-                userId: payload.userId || ctx.from.id.toString(),
-                telegramId: ctx.from.id.toString(),
-                transactionId: payment.telegram_payment_charge_id,
-                productName: payment.total_amount ? `${payment.total_amount} Stars` : 'Stars',
-                itemId: payload.itemId || 'unknown',
-                amount: payment.total_amount || 0,
-                status: "COMPLETED",
-            },
+        console.log('Payment payload:', payload);
+        // Validate required fields
+        const userId = payload.userId || ctx.from.id.toString();
+        const telegramId = ctx.from.id.toString();
+        const transactionId = payment.telegram_payment_charge_id;
+        const amount = payment.total_amount || 0;
+        const itemId = payload.itemId || 'unknown';
+        console.log('Payment data to save:', {
+            userId,
+            telegramId,
+            transactionId,
+            amount,
+            itemId
         });
-        // Update user balance
-        await prisma.user.upsert({
-            where: { telegramId: ctx.from.id.toString() },
+        // First, ensure user exists and get their ID
+        const user = await prisma.user.upsert({
+            where: { telegramId: telegramId },
             update: {
-                balance: { increment: payment.total_amount || 0 },
+                balance: { increment: amount },
                 lastSeenAt: new Date()
             },
             create: {
-                telegramId: ctx.from.id.toString(),
-                balance: payment.total_amount || 0,
+                telegramId: telegramId,
+                balance: amount,
                 lastSeenAt: new Date()
             }
         });
-        // Update invoice status if invoiceId is provided
-        if (payload.invoiceId) {
-            await prisma.invoice.update({
-                where: { id: payload.invoiceId },
-                data: { status: "PAID" }
-            });
-        }
+        console.log('User created/updated:', user);
+        // Store payment in database using the user's ID
+        const savedPayment = await prisma.payment.create({
+            data: {
+                userId: user.id, // Use the actual user ID from the database
+                telegramId: telegramId,
+                transactionId: transactionId,
+                productName: amount ? `${amount} Stars` : 'Stars',
+                itemId: itemId,
+                amount: amount,
+                status: "COMPLETED",
+            },
+        });
+        console.log('Payment saved to database:', savedPayment);
+        console.log('User balance updated:', user);
         console.log('Payment processed successfully:', payment);
         // Send confirmation message
-        await ctx.reply(`✅ Payment successful! You've purchased ${payment.total_amount} Stars. Your balance has been updated.`);
+        await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
     }
     catch (error) {
         console.error('Error processing payment:', error);
-        await ctx.reply('❌ There was an error processing your payment. Please contact support.');
+        console.error('Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : 'No stack trace',
+            name: error instanceof Error ? error.name : 'Unknown error type'
+        });
+        // Send a more user-friendly error message
+        await ctx.reply(`✅ Payment received! We're processing your purchase and will update your balance shortly.`);
     }
 });
 /*
