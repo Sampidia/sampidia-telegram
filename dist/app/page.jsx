@@ -105,9 +105,28 @@ export default function Home() {
                     if (WebApp.initDataUnsafe && WebApp.initDataUnsafe.user) {
                         // Access user data directly from the WebApp object
                         const user = WebApp.initDataUnsafe.user;
-                        setUserId(((_a = user.id) === null || _a === void 0 ? void 0 : _a.toString()) || '');
+                        const currentUserId = ((_a = user.id) === null || _a === void 0 ? void 0 : _a.toString()) || '';
+                        setUserId(currentUserId);
                         setUserFirstName(user.first_name || '');
                         setUserTelegramId(((_b = user.id) === null || _b === void 0 ? void 0 : _b.toString()) || '');
+                        // Call API to save user data to database
+                        try {
+                            await fetch('/api/user', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    telegramId: currentUserId,
+                                    firstName: user.first_name || '',
+                                    username: user.username || '',
+                                }),
+                            });
+                            console.log('User data sent to API for saving/updating.');
+                        }
+                        catch (apiError) {
+                            console.error('Error sending user data to API:', apiError);
+                        }
                     }
                     else {
                         setError('No user data available from Telegram');
@@ -331,17 +350,15 @@ export default function Home() {
             <div className="flex justify-center gap-8 mt-6 mb-8">
               <div className="flex flex-col items-center">
                 <button onClick={() => setShowWithdrawModal(true)} className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl">
-                  <i className="fa-regular fa-paper-plane"></i> {/* Withdraw icon */}
+                  <i className="fa-regular fa-paper-plane text-white"></i> {/* Withdraw icon */}
                 </button>
                 <span className="mt-2 text-center text-sm">Withdraw</span>
               </div>
 
               <div className="flex flex-col items-center">
-                <button 
-        // This button currently does nothing, as "Send" functionality is not implemented
-        className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl">
-                  <i className="fa-solid fa-arrow-right"></i> {/* Send icon */}
-                </button>
+                <a href="https://t.me/pidia2211?text=1%20want%20to%20send%20stars%20to%20USERNAME?" target="_blank" rel="noopener noreferrer" className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl">
+                  <i className="fa-solid fa-arrow-right text-white"></i> {/* Send icon */}
+                </a>
                 <span className="mt-2 text-center text-sm">Send</span>
               </div>
 
@@ -353,7 +370,7 @@ export default function Home() {
                     behavior: "smooth",
                 });
             }}>
-                  <i className="fa-solid fa-plus"></i> {/* Add icon */}
+                  <i className="fa-solid fa-plus text-white"></i> {/* Add icon */}
                 </button>
                 <span className="mt-2 text-center text-sm">Add</span>
               </div>
@@ -361,7 +378,7 @@ export default function Home() {
               <div className="flex flex-col items-center">
                 <a href="https://t.me/pidia2211" // Replace with actual support chat link
          target="_blank" rel="noopener noreferrer" className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl">
-                  <i className="fa-regular fa-comment-dots"></i> {/* Chat/Support icon */}
+                  <i className="fa-regular fa-comment-dots text-white"></i> {/* Chat/Support icon */}
                 </a>
                 <span className="mt-2 text-center text-sm">Support</span>
               </div>

@@ -132,9 +132,29 @@ export default function Home() {
           if (WebApp.initDataUnsafe && WebApp.initDataUnsafe.user) {
             // Access user data directly from the WebApp object
             const user = WebApp.initDataUnsafe.user;
-            setUserId(user.id?.toString() || '');
+            const currentUserId = user.id?.toString() || '';
+            setUserId(currentUserId);
             setUserFirstName(user.first_name || '');
             setUserTelegramId(user.id?.toString() || '');
+
+            // Call API to save user data to database
+            try {
+              await fetch('/api/user', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  telegramId: currentUserId,
+                  firstName: user.first_name || '',
+                  username: user.username || '',
+                }),
+              });
+              console.log('User data sent to API for saving/updating.');
+            } catch (apiError) {
+              console.error('Error sending user data to API:', apiError);
+            }
+
           } else {
             setError('No user data available from Telegram');
             setIsLoading(false);
@@ -393,18 +413,20 @@ export default function Home() {
                   onClick={() => setShowWithdrawModal(true)}
                   className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl"
                 >
-                  <i className="fa-regular fa-paper-plane"></i> {/* Withdraw icon */}
+                  <i className="fa-regular fa-paper-plane text-white"></i> {/* Withdraw icon */}
                 </button>
                 <span className="mt-2 text-center text-sm">Withdraw</span>
               </div>
 
               <div className="flex flex-col items-center">
-                <button
-                  // This button currently does nothing, as "Send" functionality is not implemented
+                <a
+                  href="https://t.me/pidia2211?text=1%20want%20to%20send%20stars%20to%20USERNAME?"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl"
                 >
-                  <i className="fa-solid fa-arrow-right"></i> {/* Send icon */}
-                </button>
+                  <i className="fa-solid fa-arrow-right text-white"></i> {/* Send icon */}
+                </a>
                 <span className="mt-2 text-center text-sm">Send</span>
               </div>
 
@@ -418,7 +440,7 @@ export default function Home() {
                     });
                   }}
                 >
-                  <i className="fa-solid fa-plus"></i> {/* Add icon */}
+                  <i className="fa-solid fa-plus text-white"></i> {/* Add icon */}
                 </button>
                 <span className="mt-2 text-center text-sm">Add</span>
               </div>
@@ -430,7 +452,7 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl"
                 >
-                  <i className="fa-regular fa-comment-dots"></i> {/* Chat/Support icon */}
+                  <i className="fa-regular fa-comment-dots text-white"></i> {/* Chat/Support icon */}
                 </a>
                 <span className="mt-2 text-center text-sm">Support</span>
               </div>
