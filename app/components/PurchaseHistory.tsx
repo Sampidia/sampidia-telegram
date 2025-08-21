@@ -10,6 +10,8 @@ interface PurchaseHistoryProps {
   onViewSecret: (purchase: Purchase) => void;
   onWithdraw: (transactionId: string) => void;
   isLoading?: boolean;
+  onRetry?: () => void;
+  error?: string | null;
 }
 
 export default function PurchaseHistory({ 
@@ -17,7 +19,9 @@ export default function PurchaseHistory({
   items, 
   onViewSecret, 
   onWithdraw,
-  isLoading = false
+  isLoading = false,
+  onRetry,
+  error
 }: PurchaseHistoryProps) {
   return (
     <div>
@@ -26,16 +30,38 @@ export default function PurchaseHistory({
         <div className="text-center py-4">
           <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
           <p className="mt-2 text-sm text-gray-500">Loading purchases...</p>
+          {onRetry && (
+            <button 
+              onClick={onRetry}
+              className="mt-2 text-sm text-blue-500 hover:text-blue-600 underline"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      ) : error ? (
+        <div className="text-center py-4">
+          <p className="text-red-500 mb-3">Failed to load purchase history</p>
+          {onRetry && (
+            <button 
+              onClick={onRetry}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            >
+              Retry
+            </button>
+          )}
         </div>
       ) : purchases.length === 0 ? (
         <div className="text-center py-4">
           <p className="tg-hint mb-3">No purchases yet. Buy something to see it here!</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="text-sm text-blue-500 hover:text-blue-600 underline"
-          >
-            Refresh
-          </button>
+          {onRetry && (
+            <button 
+              onClick={onRetry}
+              className="text-sm text-blue-500 hover:text-blue-600 underline"
+            >
+              Refresh
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

@@ -15,6 +15,7 @@ export default function Home() {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingPurchases, setIsLoadingPurchases] = useState(false);
     const [error, setError] = useState(null);
+    const [purchaseError, setPurchaseError] = useState(null);
     const [modalState, setModalState] = useState({ type: null });
     useEffect(() => {
         // Import TWA SDK dynamically to avoid SSR issues
@@ -46,6 +47,7 @@ export default function Home() {
                     setIsLoading(false);
                 }
                 setInitialized(true);
+                setIsLoading(false); // Set loading to false after initialization
             }
             catch (e) {
                 console.error('Failed to initialize Telegram Web App:', e);
@@ -62,8 +64,22 @@ export default function Home() {
             fetchPurchases();
         }
     }, [initialized, userId]);
+    // Add a timeout to prevent infinite loading
+    useEffect(() => {
+        if (isLoadingPurchases) {
+            const timeout = setTimeout(() => {
+                console.warn('Purchase history loading timed out');
+                setIsLoadingPurchases(false);
+                setPurchases([]);
+            }, 10000); // 10 second timeout
+            return () => clearTimeout(timeout);
+        }
+    }, [isLoadingPurchases]);
     const fetchPurchases = async () => {
+        if (!userId)
+            return;
         setIsLoadingPurchases(true);
+        setPurchaseError(null); // Clear any previous errors
         try {
             const response = await fetch(`/api/purchases?userId=${userId}`);
             if (!response.ok) {
@@ -74,7 +90,7 @@ export default function Home() {
         }
         catch (e) {
             console.error('Error fetching purchases:', e);
-            // Don't set a page-level error, just show an empty purchase history.
+            setPurchaseError('Failed to load purchase history');
             setPurchases([]);
         }
         finally {
@@ -202,16 +218,20 @@ export default function Home() {
     const handleRetry = () => {
         window.location.reload();
     };
+    // Handle retry for purchase history
+    const handleRetryPurchases = () => {
+        fetchPurchases();
+    };
     // Close modals
     const handleCloseModal = () => {
         setModalState({ type: null });
     };
     // Loading state - only show for initialization, not for purchase history
-    if (!initialized) {
+    if (!initialized || isLoading) {
         return <LoadingState />;
     }
     // Error state (including not in Telegram)
-    if (error && error !== 'Failed to load purchase history') {
+    if (error) {
         return <ErrorState error={error} onRetry={handleRetry}/>;
     }
     // Main app UI
@@ -224,6 +244,6 @@ export default function Home() {
       
       <ItemsList items={ITEMS} onPurchase={handlePurchase}/>
       
-      <PurchaseHistory purchases={purchases} items={ITEMS} onViewSecret={revealSecret} onWithdraw={handleWithdraw} isLoading={isLoadingPurchases}/>
+      <PurchaseHistory purchases={purchases} items={ITEMS} onViewSecret={revealSecret} onWithdraw={handleWithdraw} isLoading={isLoadingPurchases} onRetry={handleRetryPurchases} error={purchaseError}/>
     </div>);
 }
