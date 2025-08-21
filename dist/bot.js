@@ -100,7 +100,7 @@ bot.on("message:successful_payment", async (ctx) => {
     }
     try {
         const payment = ctx.message.successful_payment;
-        console.log('Processing payment:', payment);
+        console.log('Processing payment from Mini App:', payment);
         const payload = JSON.parse(payment.invoice_payload || '{}');
         console.log('Payment payload:', payload);
         // Validate required fields
@@ -144,12 +144,12 @@ bot.on("message:successful_payment", async (ctx) => {
         });
         console.log('Payment saved to database:', savedPayment);
         console.log('User balance updated:', user);
-        console.log('Payment processed successfully:', payment);
-        // Send confirmation message
+        console.log('Payment processed successfully from Mini App:', payment);
+        // Send confirmation message to the user
         await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
     }
     catch (error) {
-        console.error('Error processing payment:', error);
+        console.error('Error processing payment from Mini App:', error);
         console.error('Error details:', {
             message: error instanceof Error ? error.message : 'Unknown error',
             stack: error instanceof Error ? error.stack : 'No stack trace',

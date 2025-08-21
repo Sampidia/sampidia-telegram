@@ -119,15 +119,23 @@ export default function Home() {
             setIsLoading(false); // Hide loading before opening the payment UI
             // Import TWA SDK
             const WebApp = (await import('@twa-dev/sdk')).default;
-            // For Telegram Stars, we need to open the bot directly
-            // The invoiceLink is actually a bot URL that will create the payment
-            WebApp.openTelegramLink(invoiceLink);
-            // Show a better user experience message
-            const userConfirmed = confirm('Payment window opened! Please complete your payment in Telegram.\n\nAfter completing the payment, click OK to refresh your purchase history.');
-            if (userConfirmed) {
-                // Refresh purchases to show the new purchase
-                await fetchPurchases();
-            }
+            // For Telegram Stars, open the invoice directly in the Mini App
+            WebApp.openInvoice(invoiceLink, async (status) => {
+                if (status === 'paid') {
+                    // Payment was successful
+                    console.log('Payment successful!');
+                    // Show success message
+                    alert('✅ Payment successful! Your purchase has been completed.');
+                    // Refresh purchases to show the new purchase
+                    await fetchPurchases();
+                }
+                else if (status === 'failed') {
+                    alert('❌ Payment failed. Please try again.');
+                }
+                else if (status === 'cancelled') {
+                    console.log('Payment was cancelled by user');
+                }
+            });
         }
         catch (e) {
             console.error('Error during purchase:', e);

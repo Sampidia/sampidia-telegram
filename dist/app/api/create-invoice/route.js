@@ -1,5 +1,8 @@
 // app/api/create-invoice/route.ts
 import { NextResponse } from "next/server";
+import { Bot } from "grammy";
+// Create bot instance for creating invoice links
+const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
 export async function POST(req) {
     try {
         const { itemId, userId } = await req.json();
@@ -9,18 +12,23 @@ export async function POST(req) {
         if (!item) {
             return NextResponse.json({ error: 'Item not found' }, { status: 404 });
         }
-        // Create a payment URL that opens the bot
-        // The bot will handle the actual invoice creation and payment processing
-        const botUsername = process.env.BOT_USERNAME || 'SamPidiaBot';
-        const paymentUrl = `https://t.me/${botUsername}?start=pay_${item.id}_${userId}`;
+        // Prepare payload for the payment
+        const payload = JSON.stringify({
+            itemId: item.id,
+            userId: userId
+        });
+        // Create invoice link using Telegram's createInvoiceLink method
+        const invoiceLink = await bot.api.createInvoiceLink(item.name, item.description, payload, "", // Provider token must be empty for Telegram Stars
+        "XTR", // Currency for Telegram Stars
+        [{ amount: item.price, label: item.name }]);
         return NextResponse.json({
-            invoiceLink: paymentUrl,
+            invoiceLink: invoiceLink,
             item: item,
             paymentType: 'telegram_stars'
         });
     }
     catch (error) {
-        console.error('Error creating payment link:', error);
-        return NextResponse.json({ error: 'Failed to create payment link' }, { status: 500 });
+        console.error('Error creating invoice link:', error);
+        return NextResponse.json({ error: 'Failed to create invoice link' }, { status: 500 });
     }
 }
