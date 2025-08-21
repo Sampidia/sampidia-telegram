@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSecretForItem } from '@/app/server/item-secrets';
-import { auth } from "@clerk/nextjs/server"; // Or your auth provider
 import { PrismaClient } from '@prisma/client'
-
 
 const prisma = new PrismaClient()
 
@@ -15,28 +12,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    // Authenticate user (example with Clerk)
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Fetch purchase from the database
-    const purchase = await prisma.payment.findUnique({
-      where: { itemid_transactionId: { itemId, transactionId } },
-      select: { userId: true }
+    const purchase = await prisma.payment.findFirst({
+      where: { 
+        itemId: itemId,
+        transactionId: transactionId,
+        status: 'COMPLETED'
+      }
     });
 
-    if (!purchase || purchase.userId !== userId) {
-      return NextResponse.json({ error: 'Purchase not found or not authorized' }, { status: 404 });
+    if (!purchase) {
+      return NextResponse.json({ error: 'Purchase not found' }, { status: 404 });
     }
 
-     // Get the secret for the purchased item
-    const secret = getSecretForItem(itemId);
-    
-    if (!secret) {
-      return NextResponse.json({ error: 'Secret not found for this item' }, { status: 404 });
-    }
+    // Generate a secret based on the purchase (in a real app, this would be stored securely)
+    const secret = `SECRET_${purchase.itemId}_${purchase.transactionId}_${Date.now()}`;
 
     return NextResponse.json({ secret });
   } catch (error) {

@@ -14,13 +14,13 @@ export default function WithdrawalInstructionsModal({ onClose }: WithdrawalInstr
         </div>
         
         <div className="my-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-          <p className="mb-3">For withdrawal, please use the Withdraw botton or conact support at t.me/pidia2211:</p>
+          <p className="mb-3">For withdrawal, please use the Withdraw button or contact support at t.me/pidia2211:</p>
           <ol className="list-decimal list-inside space-y-2 pl-2">
             <li>Open our Telegram bot or App</li>
-            <li>the Withdraw botton or conact support at t.me/pidia2211 or search open bot and search for <code>/withdraw</code> command</li>
+            <li>Use the Withdraw button or contact support at t.me/pidia2211 or search for <code>/withdraw</code> command</li>
             <li>Follow the instructions to get a refund</li>
           </ol>
-          <p className="mt-3 text-sm italic">The bot and App has access to your complete purchase history with the actual transaction IDs required for processing refunds.</p>
+          <p className="mt-3 text-sm italic">The bot and App have access to your complete purchase history with the actual transaction IDs required for processing refunds.</p>
         </div>
         
         <button 
