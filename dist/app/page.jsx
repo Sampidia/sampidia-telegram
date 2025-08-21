@@ -350,14 +350,14 @@ export default function Home() {
             <div className="flex justify-center gap-8 mt-6 mb-8">
               <div className="flex flex-col items-center">
                 <button onClick={() => setShowWithdrawModal(true)} className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl">
-                  <i className="fa-regular fa-paper-plane text-white"></i> {/* Withdraw icon */}
+                  <i className="fa-regular fa-paper-plane" style={{ color: 'white' }}></i> {/* Withdraw icon */}
                 </button>
                 <span className="mt-2 text-center text-sm">Withdraw</span>
               </div>
 
               <div className="flex flex-col items-center">
                 <a href="https://t.me/pidia2211?text=1%20want%20to%20send%20stars%20to%20USERNAME?" target="_blank" rel="noopener noreferrer" className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl">
-                  <i className="fa-solid fa-arrow-right text-white"></i> {/* Send icon */}
+                  <i className="fa-solid fa-arrow-right" style={{ color: 'white' }}></i> {/* Send icon */}
                 </a>
                 <span className="mt-2 text-center text-sm">Send</span>
               </div>
@@ -366,11 +366,11 @@ export default function Home() {
                 <button className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl" onClick={() => {
                 var _a;
                 // Scroll to the "Add" (sell stars) section
-                (_a = document.getElementById("sell-stars")) === null || _a === void 0 ? void 0 : _a.scrollIntoView({
+                (_a = document.getElementById("sampidia-store-heading")) === null || _a === void 0 ? void 0 : _a.scrollIntoView({
                     behavior: "smooth",
                 });
             }}>
-                  <i className="fa-solid fa-plus text-white"></i> {/* Add icon */}
+                  <i className="fa-solid fa-plus" style={{ color: 'white' }}></i> {/* Add icon */}
                 </button>
                 <span className="mt-2 text-center text-sm">Add</span>
               </div>
@@ -378,7 +378,7 @@ export default function Home() {
               <div className="flex flex-col items-center">
                 <a href="https://t.me/pidia2211" // Replace with actual support chat link
          target="_blank" rel="noopener noreferrer" className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl">
-                  <i className="fa-regular fa-comment-dots text-white"></i> {/* Chat/Support icon */}
+                  <i className="fa-regular fa-comment-dots" style={{ color: 'white' }}></i> {/* Chat/Support icon */}
                 </a>
                 <span className="mt-2 text-center text-sm">Support</span>
               </div>
@@ -421,7 +421,7 @@ export default function Home() {
                 </div>
               </div>)}
             
-            <h1 className="text-2xl font-bold mb-6 text-center">SamPidia Store</h1>
+            <h1 id="sampidia-store-heading" className="text-2xl font-bold mb-6 text-center">SamPidia Store</h1>
             
             <ItemsList items={ITEMS} onPurchase={handlePurchase}/>
             
