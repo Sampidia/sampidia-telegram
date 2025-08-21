@@ -15,7 +15,20 @@ const bot = new Bot(process.env.BOT_TOKEN || "7813322141:AAEqawGpmn0hfsImfQ3hlQq
   Handles the /start command.
   Sends a welcome message to the user and explains the available commands for interacting with the bot.
 */
-bot.command("start", (ctx) =>
+bot.command("start", async (ctx) => {
+  const startParam = ctx.match;
+  
+  // Handle payment commands from web app
+  if (startParam && startParam.startsWith('pay_')) {
+    const parts = startParam.split('_');
+    if (parts.length >= 4) {
+      const [, , itemId, userId, invoiceId] = parts;
+      await handlePaymentRequest(ctx, itemId, userId, invoiceId);
+      return;
+    }
+  }
+  
+  // Regular start command
   ctx.reply(
     `Welcome to SamPidia! 🌟 I am a bot that can accept payments via Telegram Stars. The following commands are available:
 
@@ -29,10 +42,43 @@ bot.command("start", (ctx) =>
 /withdraw - Withdraw your balance
 /refund - Request a refund for a purchase
 `,
-  ),
-);
+  );
+});
 
-// Helper function to create invoice
+// Handle payment requests from web app
+async function handlePaymentRequest(ctx: any, itemId: string, userId: string, invoiceId: string) {
+  try {
+    // Get item details
+    const { ITEMS } = await import('./app/data/items');
+    const item = ITEMS.find(i => i.id === itemId);
+    
+    if (!item) {
+      await ctx.reply('❌ Item not found. Please try again.');
+      return;
+    }
+
+    // Create Telegram Stars payment
+    const payment = await ctx.replyWithInvoice(
+      item.name,
+      item.description,
+      JSON.stringify({ 
+        itemId: item.id,
+        userId: userId,
+        invoiceId: invoiceId
+      }),
+      "", // Provider token (empty for Telegram Stars)
+      "XTR", // Currency for Telegram Stars
+      [{ amount: item.price, label: item.name }]
+    );
+
+    console.log('Payment invoice created:', payment);
+  } catch (error) {
+    console.error('Error creating payment:', error);
+    await ctx.reply('❌ Failed to create payment. Please try again.');
+  }
+}
+
+// Helper function to create invoice for direct commands
 const createInvoice = (ctx: any, itemName: string, itemDescription: string, amount: number) => {
   return ctx.replyWithInvoice(
     itemName,
@@ -41,6 +87,7 @@ const createInvoice = (ctx: any, itemName: string, itemDescription: string, amou
       itemId: itemName.toLowerCase().replace(/\s+/g, ''),
       userId: ctx.from?.id 
     }),
+    "", // Provider token (empty for Telegram Stars)
     "XTR", // Currency for Telegram Stars
     [{ amount: amount, label: itemName }],
   );
@@ -82,7 +129,7 @@ bot.on("message:successful_payment", async (ctx) => {
     // Store payment in database
     await prisma.payment.create({
       data: {
-        userId: ctx.from.id.toString(),
+        userId: payload.userId || ctx.from.id.toString(),
         telegramId: ctx.from.id.toString(),
         transactionId: payment.telegram_payment_charge_id,
         productName: payment.total_amount ? `${payment.total_amount} Stars` : 'Stars',
@@ -105,6 +152,14 @@ bot.on("message:successful_payment", async (ctx) => {
         lastSeenAt: new Date()
       }
     });
+
+    // Update invoice status if invoiceId is provided
+    if (payload.invoiceId) {
+      await prisma.invoice.update({
+        where: { id: payload.invoiceId },
+        data: { status: "PAID" }
+      });
+    }
 
     console.log('Payment processed successfully:', payment);
     

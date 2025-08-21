@@ -113,6 +113,7 @@ export default function Home() {
   const handlePurchase = async (item: Item) => {
     try {
       setIsLoading(true); // Show loading indicator when starting purchase
+      
       // Create invoice link through our API
       const response = await fetch('/api/create-invoice', {
         method: 'POST',
@@ -131,66 +132,23 @@ export default function Home() {
       }
 
       const { invoiceLink } = await response.json();
-      setIsLoading(false); // Hide loading before opening the invoice UI
+      setIsLoading(false); // Hide loading before opening the payment UI
 
       // Import TWA SDK
       const WebApp = (await import('@twa-dev/sdk')).default;
       
-      // Open the invoice using Telegram's WebApp SDK
-      WebApp.openInvoice(invoiceLink, async (status) => {
-        if (status === 'paid') {
-          setIsLoading(true); // Show loading during processing after payment
-          // Payment was successful
-          // Generate a mock transaction ID since we don't have access to the real one from Telegram
-          // In a production app, this would be retrieved from your backend after the bot
-          // receives the pre_checkout_query and successful_payment updates
-          const transactionId = `txn_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-          
-          try {
-            // Store the successful payment and get the secret code
-            const paymentResponse = await fetch('/api/payment-success', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                userId,
-                itemId: item.id,
-                transactionId
-              })
-            });
-
-            if (!paymentResponse.ok) {
-              throw new Error('Failed to record payment');
-            }
-
-            const { secret } = await paymentResponse.json();
-            
-            // Show the success modal with secret code
-            setModalState({
-              type: 'purchase',
-              purchase: {
-                item,
-                transactionId,
-                timestamp: Date.now().toString(),
-                secret
-              }
-            });
-            
-            // Refresh purchases list
-            await fetchPurchases();
-          } catch (e) {
-            console.error('Error saving payment:', e);
-            alert('Your payment was successful, but we had trouble saving your purchase. Please contact support.');
-            setIsLoading(false); // Ensure loading is turned off after error
-          }
-        } else if (status === 'failed') {
-          alert('Payment failed. Please try again.');
-        } else if (status === 'cancelled') {
-          // User cancelled the payment, no action needed
-          console.log('Payment was cancelled by user');
-        }
-      });
+      // For Telegram Stars, we need to open the bot directly
+      // The invoiceLink is actually a bot URL that will create the payment
+      WebApp.openTelegramLink(invoiceLink);
+      
+      // Show a better user experience message
+      const userConfirmed = confirm('Payment window opened! Please complete your payment in Telegram.\n\nAfter completing the payment, click OK to refresh your purchase history.');
+      
+      if (userConfirmed) {
+        // Refresh purchases to show the new purchase
+        await fetchPurchases();
+      }
+      
     } catch (e) {
       console.error('Error during purchase:', e);
       alert(`Failed to process purchase: ${e instanceof Error ? e.message : 'Unknown error'}`);

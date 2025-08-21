@@ -57,26 +57,39 @@ export default function PurchaseHistory({
           {onRetry && (
             <button 
               onClick={onRetry}
-              className="text-sm text-blue-500 hover:text-blue-600 underline"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
             >
-              Refresh
+              Refresh Purchases
             </button>
           )}
         </div>
       ) : (
-        <div className="space-y-3">
-          {purchases.map((purchase) => {
-            const item = items.find(i => i.id === purchase.itemId);
-            return (
-              <PurchaseHistoryItem
-                key={purchase.transactionId}
-                purchase={purchase}
-                item={item}
-                onViewSecret={onViewSecret}
-                onWithdraw={onWithdraw}
-              />
-            );
-          })}
+        <div>
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-sm text-gray-500">{purchases.length} purchase(s)</span>
+            {onRetry && (
+              <button 
+                onClick={onRetry}
+                className="text-sm text-blue-500 hover:text-blue-600 underline"
+              >
+                Refresh
+              </button>
+            )}
+          </div>
+          <div className="space-y-3">
+            {purchases.map((purchase) => {
+              const item = items.find(i => i.id === purchase.itemId);
+              return (
+                <PurchaseHistoryItem
+                  key={purchase.transactionId}
+                  purchase={purchase}
+                  item={item}
+                  onViewSecret={onViewSecret}
+                  onWithdraw={onWithdraw}
+                />
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
