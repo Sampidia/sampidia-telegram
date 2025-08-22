@@ -1,6 +1,8 @@
 import express from "express";
 import { Bot, webhookCallback } from "grammy";
-import prisma from '@/lib/prisma';
+const { PrismaClient } = require('@prisma/client');
+import { withAccelerate } from '@prisma/extension-accelerate';
+const prisma = new PrismaClient().$extends(withAccelerate());
 const app = express();
 const port = 3001;
 app.use(express.json());
@@ -168,7 +170,11 @@ bot.command("balance", async (ctx) => {
     var _a;
     try {
         const user = await prisma.user.findUnique({
-            where: { telegramId: (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id.toString() }
+            where: { telegramId: (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id.toString() },
+            cacheStrategy: {
+                ttl: 60, // cache is fresh for 60 seconds
+                swr: 60 // serve stale data for up to 60 seconds while revalidating
+            }
         });
         const balance = (user === null || user === void 0 ? void 0 : user.balance) || 0;
         await ctx.reply(`💰 Your current balance: ${balance} Stars`);

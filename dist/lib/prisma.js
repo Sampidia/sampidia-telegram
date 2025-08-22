@@ -1,13 +1,17 @@
-var _a;
-import { PrismaClient } from '../app/generated/prisma-client';
-import { withAccelerate } from "@prisma/extension-accelerate";
+import { PrismaClient } from '@prisma/client';
+import { withAccelerate } from '@prisma/extension-accelerate';
 import { z } from "zod";
-// Example Zod schema for User creation
+// Define your Zod schema for User creation
 const UserCreateInputSchema = z.object({
-    // define your user fields here, e.g.:
-    name: z.string(),
-    email: z.string().email(),
-    // ...other fields
+    telegramId: z.string(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    username: z.string().optional(),
+    balance: z.number().int().optional(),
+    withdrawalAmount: z.number().int().optional(),
+    isActive: z.boolean().optional(),
+    lastSeenAt: z.date().optional(),
+    // Add other fields as needed
 });
 // Prisma Client extension for Zod validation
 const withValidation = {
@@ -25,9 +29,8 @@ const withValidation = {
         },
     },
 };
-const getExtendedClient = () => new PrismaClient().$extends(withValidation).$extends(withAccelerate());
-const globalForPrisma = global;
-export const prisma = (_a = globalForPrisma.prisma) !== null && _a !== void 0 ? _a : getExtendedClient();
-if (process.env.NODE_ENV !== "production")
-    globalForPrisma.prisma = prisma;
+// Compose the Prisma Client with both extensions
+const prisma = new PrismaClient()
+    .$extends(withAccelerate())
+    .$extends(withValidation);
 export default prisma;

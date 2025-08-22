@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+const { PrismaClient } = require('@prisma/client');
+import { withAccelerate } from '@prisma/extension-accelerate';
+const prisma = new PrismaClient().$extends(withAccelerate());
 export async function GET(req) {
     try {
         const itemId = req.nextUrl.searchParams.get('itemId');
@@ -13,6 +15,10 @@ export async function GET(req) {
                 itemId: itemId,
                 transactionId: transactionId,
                 status: 'COMPLETED'
+            },
+            cacheStrategy: {
+                ttl: 60, // cache is fresh for 60 seconds
+                swr: 60 // serve stale data for up to 60 seconds while revalidating
             }
         });
         if (!purchase) {

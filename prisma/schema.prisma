@@ -4,8 +4,8 @@ datasource db {
 }
 
 generator nextjs {
-  provider = "prisma-client-js"
-  output   = "../app/generated/prisma-client"
+  provider = "prisma-client-js" // or "prisma-client" if using the new generator
+  output   = "app/generated-prisma-client"
 }
 
 model User {

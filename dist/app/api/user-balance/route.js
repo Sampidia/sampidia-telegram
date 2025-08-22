@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from '@/lib/prisma';
+const { PrismaClient } = require('@prisma/client');
+import { withAccelerate } from '@prisma/extension-accelerate';
+const prisma = new PrismaClient().$extends(withAccelerate());
 export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);
@@ -10,7 +12,11 @@ export async function GET(req) {
         // Find user by Telegram ID
         const user = await prisma.user.findUnique({
             where: { telegramId: userId },
-            select: { balance: true }
+            select: { balance: true },
+            cacheStrategy: {
+                ttl: 60, // cache is fresh for 60 seconds
+                swr: 60 // serve stale data for up to 60 seconds while revalidating
+            }
         });
         // Return balance (0 if user not found)
         return NextResponse.json({

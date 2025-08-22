@@ -16,8 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Telegram Digital Store",
   description: "Buy digital items with Telegram Stars",
-  viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
- 
 };
 
 export const viewport: Viewport = {
@@ -25,6 +23,9 @@ export const viewport: Viewport = {
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
   ],
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 }
 
 export default function RootLayout({

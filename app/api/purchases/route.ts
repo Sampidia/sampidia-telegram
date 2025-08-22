@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getItemById } from '@/app/data/items';
-import prisma from '@/lib/prisma'
-// use `prisma` in your application to read and write data in your DB
+const { PrismaClient } = require('@prisma/client');
+import { withAccelerate } from '@prisma/extension-accelerate';
+
+const prisma = new PrismaClient().$extends(withAccelerate());
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,14 +21,18 @@ export async function GET(req: NextRequest) {
     try {
       // Filter purchases by userId from database
       const userPurchases = await prisma.payment.findMany({
-        where: {
-          userId: userId,
-          status: 'COMPLETED'
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      });
+  where: {
+    userId: userId,
+    status: 'COMPLETED'
+  },
+  orderBy: {
+    createdAt: 'desc'
+  },
+  cacheStrategy: {
+    ttl: 60, // cache is fresh for 60 seconds
+    swr: 60  // serve stale data for up to 60 seconds while revalidating
+  }
+});
       
       // Validate all items in purchases exist (in case item data has changed)
       const validatedPurchases = userPurchases.map((purchase: any) => {

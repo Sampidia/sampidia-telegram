@@ -1,6 +1,9 @@
 import express from "express";
 import { Bot, webhookCallback } from "grammy";
-import prisma from '@/lib/prisma'
+const { PrismaClient } = require('@prisma/client');
+import { withAccelerate } from '@prisma/extension-accelerate';
+
+const prisma = new PrismaClient().$extends(withAccelerate());
 
 const app = express();
 const port = 3001;
@@ -203,8 +206,12 @@ bot.on("message:successful_payment", async (ctx) => {
 bot.command("balance", async (ctx) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { telegramId: ctx.from?.id.toString() }
-    });
+  where: { telegramId: ctx.from?.id.toString() },
+  cacheStrategy: {
+    ttl: 60, // cache is fresh for 60 seconds
+    swr: 60  // serve stale data for up to 60 seconds while revalidating
+  }
+});
     
     const balance = user?.balance || 0;
     await ctx.reply(`💰 Your current balance: ${balance} Stars`);

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma'
+const { PrismaClient } = require('@prisma/client');
+import { withAccelerate } from '@prisma/extension-accelerate';
+
+const prisma = new PrismaClient().$extends(withAccelerate());
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,13 +15,16 @@ export async function GET(req: NextRequest) {
 
     // Fetch purchase from the database
     const purchase = await prisma.payment.findFirst({
-      where: { 
-        itemId: itemId,
-        transactionId: transactionId,
-        status: 'COMPLETED'
-      }
-    });
-
+  where: { 
+    itemId: itemId,
+    transactionId: transactionId,
+    status: 'COMPLETED'
+  },
+  cacheStrategy: {
+    ttl: 60, // cache is fresh for 60 seconds
+    swr: 60  // serve stale data for up to 60 seconds while revalidating
+  }
+});
     if (!purchase) {
       return NextResponse.json({ error: 'Purchase not found' }, { status: 404 });
     }

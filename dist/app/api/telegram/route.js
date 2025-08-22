@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { Bot, webhookCallback } from "grammy";
-import prisma from '@/lib/prisma';
+const { PrismaClient } = require('@prisma/client');
+import { withAccelerate } from '@prisma/extension-accelerate';
+const prisma = new PrismaClient().$extends(withAccelerate());
 // Initialize the bot with your token
 const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
 // Command handlers
@@ -49,7 +51,6 @@ bot.on("message:successful_payment", async (ctx) => {
         // Store payment in database
         await prisma.payment.create({
             data: {
-                userId: ctx.from.id.toString(),
                 telegramId: ctx.from.id.toString(),
                 transactionId: payment.telegram_payment_charge_id,
                 productName: payment.total_amount ? `${payment.total_amount} Stars` : 'Stars',
@@ -87,7 +88,11 @@ bot.command("balance", async (ctx) => {
     var _a;
     try {
         const user = await prisma.user.findUnique({
-            where: { telegramId: (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id.toString() }
+            where: { telegramId: (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id.toString() },
+            cacheStrategy: {
+                ttl: 60, // cache is fresh for 60 seconds
+                swr: 60 // serve stale data for up to 60 seconds while revalidating
+            }
         });
         const balance = (user === null || user === void 0 ? void 0 : user.balance) || 0;
         await ctx.reply(`💰 Your current balance: ${balance} Stars`);
@@ -104,6 +109,7 @@ bot.command("withdraw", (ctx) => {
 
 Your Telegram ID: ${(_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id}
 Current balance: Check with /balance command
+Open the Mini App and withdraw.
 
 We'll process your withdrawal within 24-48 hours.`);
 });
