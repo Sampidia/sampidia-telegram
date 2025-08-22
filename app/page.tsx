@@ -13,7 +13,6 @@ import PurchaseSuccessModal from '@/app/components/PurchaseSuccessModal';
 import WithdrawalInstructionsModal from '@/app/components/WithdrawalInstructionsModal';
 
 export default function Home() {
-  const [balance, setBalance] = useState(0);
   const [initialized, setInitialized] = useState(false);
   const [userId, setUserId] = useState<string>('');
   const [userFirstName, setUserFirstName] = useState<string>('');
@@ -137,13 +136,10 @@ export default function Home() {
             setUserId(currentUserId);
             setUserFirstName(user.first_name || '');
             setUserTelegramId(user.id?.toString() || '');
-            console.log('Telegram User ID (currentUserId):', currentUserId);
-            console.log('Telegram User First Name:', user.first_name);
-            console.log('Telegram User Username:', user.username);
 
             // Call API to save user data to database
             try {
-              const apiUserResponse = await fetch('/api/user', {
+              await fetch('/api/user', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -154,18 +150,9 @@ export default function Home() {
                   username: user.username || '',
                 }),
               });
-              const apiUserData = await apiUserResponse.json();
-              if (apiUserResponse.ok) {
-                console.log('User data sent to /api/user for saving/updating. Response:', apiUserData);
-              } else {
-                console.error('Error sending user data to /api/user:', apiUserData.error);
-                setError(apiUserData.error || 'Failed to save user data');
-                setIsLoading(false);
-              }
+              console.log('User data sent to API for saving/updating.');
             } catch (apiError) {
-              console.error('Error sending user data to /api/user:', apiError);
-              setError('Failed to communicate with user API');
-              setIsLoading(false);
+              console.error('Error sending user data to API:', apiError);
             }
 
           } else {
@@ -192,7 +179,11 @@ export default function Home() {
   }, []);
 
   // Fetch user balance
- 
+  useEffect(() => {
+    if (initialized && userId) {
+      fetchUserBalance();
+    }
+  }, [initialized, userId]);
 
   // Fetch purchase history
   useEffect(() => {
@@ -215,13 +206,31 @@ export default function Home() {
   }, [isLoadingPurchases]);
 
   // Set up periodic balance updates
-  
   useEffect(() => {
-    fetch(`/api/user-balance/${userTelegramId}`)
-      .then(res => res.json())
-      .then(data => setBalance(data.balance));
-  }, [userTelegramId]);
+    if (initialized && userId) {
+      // Update balance every 30 seconds
+      const interval = setInterval(() => {
+        fetchUserBalance();
+      }, 30000);
 
+      return () => clearInterval(interval);
+    }
+  }, [initialized, userId]);
+
+  const fetchUserBalance = async () => {
+    if (!userId) return;
+    
+    try {
+      const response = await fetch(`/api/user-balance?userId=${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserBalance(data.balance || 0);
+      }
+    } catch (e) {
+      console.error('Error fetching user balance:', e);
+      // Don't show error for balance fetch, just keep current value
+    }
+  };
 
   const fetchPurchases = async () => {
     if (!userId) return;
@@ -284,24 +293,21 @@ export default function Home() {
           // Refresh purchases to show the new purchase
           await fetchPurchases();
           
-   // Update user balance after successful payment
-         // await Balance();
+          // Update user balance after successful payment
+          await fetchUserBalance();
         } else if (status === 'failed') {
           alert('❌ Payment failed. Please try again.');
         } else if (status === 'cancelled') {
           console.log('Payment was cancelled by user');
         }
-      });  
+      });
       
     } catch (e) {
       console.error('Error during purchase:', e);
       alert(`Failed to process purchase: ${e instanceof Error ? e.message : 'Unknown error'}`);
       setIsLoading(false); // Ensure loading is turned off after error
-      
     }
-      
   };
-
 
   // Function to reveal secret for past purchases
   const revealSecret = async (purchase: Purchase) => {
@@ -383,7 +389,7 @@ export default function Home() {
       )}
 
       {/* Conditional rendering based on activeTab */}
-      <div className="h-screen"> {/* Changed to h-screen for full height */}
+      <div className="pb-20"> {/* Added pb-20 to ensure content is not hidden by footer */}
         {activeTab === 1 && (
           <>
             {/* User Info Display */}
@@ -395,7 +401,7 @@ export default function Home() {
             {/* User Balance Display */}
             <div className="flex items-center justify-center mb-4 p-3 bg-gray-800 rounded-lg">
               <span className="text-white text-lg font-semibold">
-                Balance: {balance}
+                Balance: {userBalance.toLocaleString()}
               </span>
               <span className="text-yellow-400 text-xl ml-2">⭐</span>
             </div>
@@ -419,7 +425,7 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl"
                 >
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ color: 'white', width: '40px', height: '40px' }}><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M20.7639 12H10.0556M3 8.00003H5.5M4 12H5.5M4.5 16H5.5M9.96153 12.4896L9.07002 15.4486C8.73252 16.5688 8.56376 17.1289 8.70734 17.4633C8.83199 17.7537 9.08656 17.9681 9.39391 18.0415C9.74792 18.1261 10.2711 17.8645 11.3175 17.3413L19.1378 13.4311C20.059 12.9705 20.5197 12.7402 20.6675 12.4285C20.7961 12.1573 20.7961 11.8427 20.6675 11.5715C20.5197 11.2598 20.059 11.0295 19.1378 10.5689L11.3068 6.65342C10.2633 6.13168 9.74156 5.87081 9.38789 5.95502C9.0808 6.02815 8.82627 6.24198 8.70128 6.53184C8.55731 6.86569 8.72427 7.42461 9.05819 8.54246L9.96261 11.5701C10.0137 11.7411 10.0392 11.8266 10.0493 11.9137C10.0583 11.991 10.0582 12.069 10.049 12.1463C10.0387 12.2334 10.013 12.3188 9.96153 12.4896Z" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg> {/* Send icon */}
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ color: 'white', width: '24px', height: '24px' }}><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M20.7639 12H10.0556M3 8.00003H5.5M4 12H5.5M4.5 16H5.5M9.96153 12.4896L9.07002 15.4486C8.73252 16.5688 8.56376 17.1289 8.70734 17.4633C8.83199 17.7537 9.08656 17.9681 9.39391 18.0415C9.74792 18.1261 10.2711 17.8645 11.3175 17.3413L19.1378 13.4311C20.059 12.9705 20.5197 12.7402 20.6675 12.4285C20.7961 12.1573 20.7961 11.8427 20.6675 11.5715C20.5197 11.2598 20.059 11.0295 19.1378 10.5689L11.3068 6.65342C10.2633 6.13168 9.74156 5.87081 9.38789 5.95502C9.0808 6.02815 8.82627 6.24198 8.70128 6.53184C8.55731 6.86569 8.72427 7.42461 9.05819 8.54246L9.96261 11.5701C10.0137 11.7411 10.0392 11.8266 10.0493 11.9137C10.0583 11.991 10.0582 12.069 10.049 12.1463C10.0387 12.2334 10.013 12.3188 9.96153 12.4896Z" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg> {/* Send icon */}
                 </a>
                 <span className="mt-2 text-center text-sm">Send</span>
               </div>
@@ -434,7 +440,7 @@ export default function Home() {
                     });
                   }}
                 >
-                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#000000" width="40px" height="40px"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <title></title> <g id="Complete"> <g data-name="add" id="add-2"> <g> <line fill="none" stroke="#ffffff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="12" x2="12" y1="19" y2="5"></line> <line fill="none" stroke="#ffffff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="5" x2="19" y1="12" y2="12"></line> </g> </g> </g> </g></svg> {/* Add icon */}
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <title></title> <g id="Complete"> <g data-name="add" id="add-2"> <g> <line fill="none" stroke="#ffffff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="12" x2="12" y1="19" y2="5"></line> <line fill="none" stroke="#ffffff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" x1="5" x2="19" y1="12" y2="12"></line> </g> </g> </g> </g></svg> {/* Add icon */}
                 </button>
                 <span className="mt-2 text-center text-sm">Add</span>
               </div>
@@ -446,7 +452,7 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl"
                 >
-                  <svg version="1.1" id="Icons" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" xmlSpace="preserve" style={{ fill: '#000000', width: '40px', height: '40px' }}><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M5,17.4v-3.5C5,7.9,9.9,3,16,3s11,4.9,11,10.9l0,3.5"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M27,15v3.4C27,24.3,22.1,29,16,29l0-2l3,0"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M9,22v-8c-2.2,0-4,1.8-4,4S6.8,22,9,22z"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M23,14v8c2.2,0,4-1.8,4-4S25.2,14,23,14z"></path> </g></svg> {/* Chat/Support icon */}
+                  <svg version="1.1" id="Icons" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" xmlSpace="preserve" style={{ fill: '#000000' }}><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M5,17.4v-3.5C5,7.9,9.9,3,16,3s11,4.9,11,10.9l0,3.5"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M27,15v3.4C27,24.3,22.1,29,16,29l0-2l3,0"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M9,22v-8c-2.2,0-4,1.8-4,4S6.8,22,9,22z"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M23,14v8c2.2,0,4-1.8,4-4S25.2,14,23,14z"></path> </g></svg> {/* Chat/Support icon */}
                 </a>
                 <span className="mt-2 text-center text-sm">Support</span>
               </div>
@@ -574,7 +580,7 @@ export default function Home() {
         
         {activeTab === 2 && (
           <>
-          <div className="w-full h-screen"> {/* Changed to h-screen */}
+          <div className="w-full h-full" style={{height:'calc(100vh - 120px)'}}>
             <iframe 
               src="https://sampidia.com" 
               title="Tab 2" 
@@ -585,7 +591,7 @@ export default function Home() {
         )}
 
         {activeTab === 3 && (
-          <div className="w-full h-screen"> {/* Changed to h-screen */}
+          <div className="w-full h-full" style={{height:'calc(100vh - 120px)'}}>
             <iframe 
               src="https://connect.sampidia.com" 
               title="Tab 3" 
@@ -595,7 +601,7 @@ export default function Home() {
         )}
 
         {activeTab === 4 && (
-          <div className="w-full h-screen"> {/* Changed to h-screen */}
+          <div className="w-full h-full" style={{height:'calc(100vh - 120px)'}}>
             <iframe 
               src="https://ai.sampidia.com" 
               title="Tab 4" 
@@ -607,7 +613,7 @@ export default function Home() {
 
       {/* Mobile Tab Navigation */}
       <div className="fixed bottom-0 left-0 right-0 flex justify-center items-center z-50" style={{maxWidth:'500px',margin:'0 auto'}}>
-        <div className="flex w-full mx-4 my-2 bg-transparent rounded-full shadow-lg px-2 py-2" style={{gap:'8px'}}> {/* Changed bg-white to bg-transparent */}
+        <div className="flex w-full mx-4 my-2 bg-white rounded-full shadow-lg px-2 py-2" style={{gap:'8px'}}>
           
           <button
             onClick={() => setActiveTab(1)}
