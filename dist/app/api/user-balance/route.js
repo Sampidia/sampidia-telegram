@@ -14,9 +14,8 @@ export async function GET(req) {
             select: { balance: true }
         });
         // Return balance (0 if user not found)
-        return NextResponse.json({
-            balance: (user === null || user === void 0 ? void 0 : user.balance) || 0
-        });
+        const userBalance = (user === null || user === void 0 ? void 0 : user.balance) || 0;
+        return NextResponse.json({ userBalance });
     }
     catch (error) {
         console.error('Error fetching user balance:', error);

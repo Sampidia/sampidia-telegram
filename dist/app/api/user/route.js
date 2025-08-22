@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 export async function POST(req) {
     try {
-        const { telegramId, firstName, username } = await req.json();
+        const { telegramId, firstName, username, balance } = await req.json();
         if (!telegramId) {
             return NextResponse.json({ error: "telegramId is required" }, { status: 400 });
         }
@@ -19,7 +19,7 @@ export async function POST(req) {
                 telegramId: String(telegramId),
                 firstName: firstName || '',
                 username: username || '',
-                balance: 0, // Initialize balance for new users
+                balance: balance || '',
                 lastSeenAt: new Date(),
             },
         });

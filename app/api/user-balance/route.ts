@@ -19,9 +19,8 @@ export async function GET(req: NextRequest) {
     });
 
     // Return balance (0 if user not found)
-    return NextResponse.json({ 
-      balance: user?.balance || 0 
-    });
+    const userBalance = user?.balance || 0;
+    return NextResponse.json({ userBalance });
   } catch (error) {
     console.error('Error fetching user balance:', error);
     return NextResponse.json({ error: 'Failed to fetch user balance' }, { status: 500 });
