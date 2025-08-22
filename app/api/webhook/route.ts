@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Bot, webhookCallback } from "grammy";
-const { PrismaClient } = require('@prisma/client');
-import { withAccelerate } from '@prisma/extension-accelerate';
+import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient().$extends(withAccelerate());
+const prisma = new PrismaClient()
 
 const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
 

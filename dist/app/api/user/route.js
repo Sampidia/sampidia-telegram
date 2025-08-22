@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-const { PrismaClient } = require('@prisma/client');
-import { withAccelerate } from '@prisma/extension-accelerate';
-const prisma = new PrismaClient().$extends(withAccelerate());
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 export async function POST(req) {
     try {
         const { telegramId, firstName, username } = await req.json();

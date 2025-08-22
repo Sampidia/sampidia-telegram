@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getItemById } from '@/app/data/items';
-const { PrismaClient } = require('@prisma/client');
-import { withAccelerate } from '@prisma/extension-accelerate';
+import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient().$extends(withAccelerate());
+const prisma = new PrismaClient()
 
 export async function GET(req: NextRequest) {
   try {
@@ -28,11 +27,7 @@ export async function GET(req: NextRequest) {
   orderBy: {
     createdAt: 'desc'
   },
-  cacheStrategy: {
-    ttl: 60, // cache is fresh for 60 seconds
-    swr: 60  // serve stale data for up to 60 seconds while revalidating
-  }
-});
+  });
       
       // Validate all items in purchases exist (in case item data has changed)
       const validatedPurchases = userPurchases.map((purchase: any) => {

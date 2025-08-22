@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Bot, webhookCallback } from "grammy";
-const { PrismaClient } = require('@prisma/client');
-import { withAccelerate } from '@prisma/extension-accelerate';
+import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient().$extends(withAccelerate());
+const prisma = new PrismaClient()
 // Initialize the bot with your token
 const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
 
@@ -67,6 +66,7 @@ bot.on("message:successful_payment", async (ctx) => {
     // Store payment in database
     await prisma.payment.create({
       data: {
+        userId: ctx.from.id.toString(), // Add userId here
         telegramId: ctx.from.id.toString(),
         transactionId: payment.telegram_payment_charge_id,
         productName: payment.total_amount ? `${payment.total_amount} Stars` : 'Stars',
@@ -117,10 +117,6 @@ bot.command("balance", async (ctx) => {
     
     const user = await prisma.user.findUnique({
       where: { telegramId: telegramId },
-      cacheStrategy: {
-        ttl: 60, // cache is fresh for 60 seconds
-        swr: 60  // serve stale data for up to 60 seconds while revalidating
-      }
     });
     
     const balance = user?.balance || 0;

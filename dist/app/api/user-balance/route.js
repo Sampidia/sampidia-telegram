@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-const { PrismaClient } = require('@prisma/client');
-import { withAccelerate } from '@prisma/extension-accelerate';
-const prisma = new PrismaClient().$extends(withAccelerate());
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);

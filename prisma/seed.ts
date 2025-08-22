@@ -1,16 +1,15 @@
-const { PrismaClient } = require('@prisma/client');
-import { withAccelerate } from '@prisma/extension-accelerate';
+import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient().$extends(withAccelerate());
+const prisma = new PrismaClient()
 
 async function main() {
   // Create a new user
   const user = await prisma.user.create({
     data: {
-      telegramId: '22222112',
-      firstName: 'Sam222112112',
-      lastName: 'Test221112113',
-      username: 'johndoe221112113',
+      telegramId: '2333333',
+      firstName: 'Sam2333',
+      lastName: 'Test333',
+      username: 'johndoe3333',
       // balance, withdrawalAmount, isActive, createdAt, updatedAt will use defaults
     },
   })
@@ -18,10 +17,7 @@ async function main() {
 
   // Fetch all users
   const allUsers = await prisma.user.findMany({
-    cacheStrategy: {
-      swr: 60,
-      ttl: 60
-    }
+    
 });
   console.log('All users:', allUsers)
 }
