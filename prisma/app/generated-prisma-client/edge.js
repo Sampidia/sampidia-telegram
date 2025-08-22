@@ -181,7 +181,7 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../.env"
   },
   "relativePath": "../..",
@@ -202,7 +202,7 @@ const config = {
   },
   "inlineSchema": "datasource db {\n  provider = \"postgresql\" // or \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\ngenerator nextjs {\n  provider = \"prisma-client-js\" // or \"prisma-client\" if using the new generator\n  output   = \"app/generated-prisma-client\"\n}\n\nmodel User {\n  id               String    @id @default(cuid()) @map(\"_id\")\n  telegramId       String    @unique\n  firstName        String?\n  lastName         String?\n  username         String?\n  balance          Int       @default(0)\n  withdrawalAmount Int       @default(0)\n  isActive         Boolean   @default(true)\n  lastSeenAt       DateTime?\n  payments         Payment[] @relation(\"UserById\")\n  telegramPayments Payment[] @relation(\"UserByTelegramId\")\n  invoices         Invoice[]\n  createdAt        DateTime  @default(now())\n  updatedAt        DateTime  @updatedAt\n}\n\nmodel Invoice {\n  id          String   @id @default(cuid()) @map(\"_id\")\n  userId      String\n  user        User     @relation(fields: [userId], references: [id])\n  title       String\n  description String\n  currency    String\n  amount      Int\n  status      String // e.g., \"PENDING\", \"PAID\", \"CANCELLED\"\n  payment     Payment?\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n}\n\nmodel Payment {\n  id            String   @id @default(cuid()) @map(\"_id\")\n  userId        String\n  user          User     @relation(\"UserById\", fields: [userId], references: [id])\n  invoiceId     String?  @unique\n  invoice       Invoice? @relation(fields: [invoiceId], references: [id])\n  telegramId    String\n  telegramUser  User     @relation(\"UserByTelegramId\", fields: [telegramId], references: [telegramId])\n  transactionId String   @unique\n  productName   String\n  itemId        String\n  amount        Int\n  status        String // e.g., \"PENDING\", \"COMPLETED\", \"REFUNDED\"\n  createdAt     DateTime @default(now())\n\n  @@unique([itemId, transactionId], name: \"itemid_transactionId\")\n}\n",
   "inlineSchemaHash": "2767ea8aa547e882b50c316d5f76b91a7b56e869d3473b0d42c7f7aed2a1dfae",
-  "copyEngine": true
+  "copyEngine": false
 }
 config.dirname = '/'
 
