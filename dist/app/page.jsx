@@ -9,6 +9,7 @@ import PurchaseHistory from '@/app/components/PurchaseHistory';
 import PurchaseSuccessModal from '@/app/components/PurchaseSuccessModal';
 import WithdrawalInstructionsModal from '@/app/components/WithdrawalInstructionsModal';
 export default function Home() {
+    const [balance, setBalance] = useState(0);
     const [initialized, setInitialized] = useState(false);
     const [userId, setUserId] = useState('');
     const [userFirstName, setUserFirstName] = useState('');
@@ -109,9 +110,12 @@ export default function Home() {
                         setUserId(currentUserId);
                         setUserFirstName(user.first_name || '');
                         setUserTelegramId(((_b = user.id) === null || _b === void 0 ? void 0 : _b.toString()) || '');
+                        console.log('Telegram User ID (currentUserId):', currentUserId);
+                        console.log('Telegram User First Name:', user.first_name);
+                        console.log('Telegram User Username:', user.username);
                         // Call API to save user data to database
                         try {
-                            await fetch('/api/user', {
+                            const apiUserResponse = await fetch('/api/user', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -122,10 +126,20 @@ export default function Home() {
                                     username: user.username || '',
                                 }),
                             });
-                            console.log('User data sent to API for saving/updating.');
+                            const apiUserData = await apiUserResponse.json();
+                            if (apiUserResponse.ok) {
+                                console.log('User data sent to /api/user for saving/updating. Response:', apiUserData);
+                            }
+                            else {
+                                console.error('Error sending user data to /api/user:', apiUserData.error);
+                                setError(apiUserData.error || 'Failed to save user data');
+                                setIsLoading(false);
+                            }
                         }
                         catch (apiError) {
-                            console.error('Error sending user data to API:', apiError);
+                            console.error('Error sending user data to /api/user:', apiError);
+                            setError('Failed to communicate with user API');
+                            setIsLoading(false);
                         }
                     }
                     else {
@@ -151,11 +165,6 @@ export default function Home() {
         initTelegram();
     }, []);
     // Fetch user balance
-    useEffect(() => {
-        if (initialized && userId) {
-            fetchUserBalance();
-        }
-    }, [initialized, userId]);
     // Fetch purchase history
     useEffect(() => {
         if (initialized && userId) {
@@ -175,29 +184,10 @@ export default function Home() {
     }, [isLoadingPurchases]);
     // Set up periodic balance updates
     useEffect(() => {
-        if (initialized && userId) {
-            // Update balance every 30 seconds
-            const interval = setInterval(() => {
-                fetchUserBalance();
-            }, 30000);
-            return () => clearInterval(interval);
-        }
-    }, [initialized, userId]);
-    const fetchUserBalance = async () => {
-        if (!userId)
-            return;
-        try {
-            const response = await fetch(`/api/user-balance?userId=${userId}`);
-            if (response.ok) {
-                const data = await response.json();
-                setUserBalance(data.balance || 0);
-            }
-        }
-        catch (e) {
-            console.error('Error fetching user balance:', e);
-            // Don't show error for balance fetch, just keep current value
-        }
-    };
+        fetch(`/api/user-balance/${userTelegramId}`)
+            .then(res => res.json())
+            .then(data => setBalance(data.balance));
+    }, [userTelegramId]);
     const fetchPurchases = async () => {
         if (!userId)
             return;
@@ -252,7 +242,7 @@ export default function Home() {
                     // Refresh purchases to show the new purchase
                     await fetchPurchases();
                     // Update user balance after successful payment
-                    await fetchUserBalance();
+                    // await Balance();
                 }
                 else if (status === 'failed') {
                     alert('❌ Payment failed. Please try again.');
@@ -341,7 +331,7 @@ export default function Home() {
             {/* User Balance Display */}
             <div className="flex items-center justify-center mb-4 p-3 bg-gray-800 rounded-lg">
               <span className="text-white text-lg font-semibold">
-                Balance: {userBalance.toLocaleString()}
+                Balance: {balance}
               </span>
               <span className="text-yellow-400 text-xl ml-2">⭐</span>
             </div>
