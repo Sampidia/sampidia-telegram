@@ -83,12 +83,20 @@ bot.on("message:successful_payment", async (ctx) => {
         await ctx.reply(`✅ Payment received! We're processing your purchase and will update your balance shortly.`);
     }
 });
-// Balance command
+/*
+  Handles the /balance command.
+  Shows the user's current balance.
+*/
 bot.command("balance", async (ctx) => {
     var _a;
     try {
+        if (!((_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id)) {
+            await ctx.reply('❌ Unable to identify your Telegram ID. Please try again.');
+            return;
+        }
+        const telegramId = ctx.from.id.toString();
         const user = await prisma.user.findUnique({
-            where: { telegramId: (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id.toString() },
+            where: { telegramId: telegramId },
             cacheStrategy: {
                 ttl: 60, // cache is fresh for 60 seconds
                 swr: 60 // serve stale data for up to 60 seconds while revalidating
@@ -151,7 +159,7 @@ export async function POST(req) {
 export async function GET() {
     return NextResponse.json({
         status: "ok",
-        message: "SamPidia Telegram Bot is running on Vercel 🚀",
+        message: "SamPidia Telegram Bot is running 🚀",
         timestamp: new Date().toISOString()
     });
 }

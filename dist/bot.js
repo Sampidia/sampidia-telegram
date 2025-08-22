@@ -117,26 +117,37 @@ bot.on("message:successful_payment", async (ctx) => {
             amount,
             itemId
         });
-        // First, ensure user exists and get their ID
-        const user = await prisma.user.upsert({
+        // Check if user exists
+        let user = await prisma.user.findUnique({
             where: { telegramId: telegramId },
-            update: {
-                balance: { increment: amount },
-                lastSeenAt: new Date()
-            },
-            create: {
-                telegramId: telegramId,
-                firstName: ctx.from.first_name || '',
-                username: ctx.from.username || '',
-                balance: amount,
-                lastSeenAt: new Date()
-            }
         });
-        console.log('User created/updated:', user);
+        if (user) {
+            // If user exists, update their balance
+            user = await prisma.user.update({
+                where: { telegramId: telegramId },
+                data: {
+                    balance: { increment: amount },
+                    lastSeenAt: new Date(),
+                },
+            });
+            console.log('User balance updated:', user);
+        }
+        else {
+            // If user does not exist, create a new user
+            user = await prisma.user.create({
+                data: {
+                    telegramId: telegramId,
+                    firstName: ctx.from.first_name || '',
+                    username: ctx.from.username || '',
+                    balance: amount,
+                    lastSeenAt: new Date(),
+                },
+            });
+            console.log('New user created:', user);
+        }
         // Store payment in database using the user's ID
         const savedPayment = await prisma.payment.create({
             data: {
-                userId: user.id, // Use the actual user ID from the database
                 telegramId: telegramId,
                 transactionId: transactionId,
                 productName: amount ? `${amount} Stars` : 'Stars',
@@ -169,8 +180,13 @@ bot.on("message:successful_payment", async (ctx) => {
 bot.command("balance", async (ctx) => {
     var _a;
     try {
+        if (!((_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id)) {
+            await ctx.reply('❌ Unable to identify your Telegram ID. Please try again.');
+            return;
+        }
+        const telegramId = ctx.from.id.toString();
         const user = await prisma.user.findUnique({
-            where: { telegramId: (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id.toString() },
+            where: { telegramId: telegramId },
             cacheStrategy: {
                 ttl: 60, // cache is fresh for 60 seconds
                 swr: 60 // serve stale data for up to 60 seconds while revalidating
