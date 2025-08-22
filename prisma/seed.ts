@@ -7,10 +7,10 @@ async function main() {
   // Create a new user
   const user = await prisma.user.create({
     data: {
-      telegramId: '11111111111111111',
-      firstName: 'Sam22211',
-      lastName: 'Test22111',
-      username: 'johndoe22111',
+      telegramId: '22222112',
+      firstName: 'Sam222112112',
+      lastName: 'Test221112113',
+      username: 'johndoe221112113',
       // balance, withdrawalAmount, isActive, createdAt, updatedAt will use defaults
     },
   })

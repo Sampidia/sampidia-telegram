@@ -13,20 +13,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "telegramId is required" }, { status: 400 });
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-  where: { telegramId: String(telegramId) },
-  cacheStrategy: {
-    ttl: 60, // cache is fresh for 60 seconds
-    swr: 60  // serve stale data for up to 60 seconds while revalidating
-  }
-});
+    // Use upsert to create the user if they don't exist, or update if they do
+    const user = await prisma.user.upsert({
+      where: { telegramId: String(telegramId) },
+      update: {
+        firstName: firstName || '',
+        username: username || '',
+        lastSeenAt: new Date(),
+      },
+      create: {
+        telegramId: String(telegramId),
+        firstName: firstName || '',
+        username: username || '',
+        balance: 0, // Initialize balance for new users
+        lastSeenAt: new Date(),
+      },
+    });
 
-    if (existingUser) {
-      return NextResponse.json({ user: existingUser, message: "User already exists" });
-    } else {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    return NextResponse.json({ user, message: "User created or updated" });
   } catch (error) {
     console.error("Error in user API:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
