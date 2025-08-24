@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { withAccelerate } from '@prisma/extension-accelerate'
-import { z } from "zod"
+import { z } from 'zod'
 
 // Define your Zod schema for User creation
 const UserCreateInputSchema = z.object({
@@ -12,7 +12,6 @@ const UserCreateInputSchema = z.object({
   withdrawalAmount: z.number().int().optional(),
   isActive: z.boolean().optional(),
   lastSeenAt: z.date().optional(),
-  // Add other fields as needed
 })
 
 // Prisma Client extension for Zod validation
@@ -27,14 +26,24 @@ const withValidation = {
         args.data = UserCreateInputSchema.partial().parse(args.data)
         return query(args)
       },
-      // Add other methods as needed
     },
   },
 }
 
-// Compose the Prisma Client with both extensions
-const prisma = new PrismaClient()
-  .$extends(withAccelerate())
-  .$extends(withValidation)
+// Ensure a single PrismaClient instance in dev to prevent too many connections
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
+
+function createPrismaClient() {
+  let client = new PrismaClient()
+  // Enable Accelerate only if configured
+  if (process.env.PRISMA_ACCELERATE_URL) {
+    client = client.$extends(withAccelerate()) as unknown as PrismaClient
+  }
+  // Always apply validation
+  return client.$extends(withValidation) as unknown as PrismaClient
+}
+
+const prisma = globalForPrisma.prisma ?? createPrismaClient()
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 export default prisma

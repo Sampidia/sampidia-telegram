@@ -213,7 +213,7 @@ const config = {
   },
   "inlineSchema": "datasource db {\n  provider = \"postgresql\" // or \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\ngenerator nextjs {\n  provider = \"prisma-client-js\" // or \"prisma-client\" if using the new generator\n  output   = \"app/generated-prisma-client\"\n}\n\nmodel User {\n  id               String     @id @default(cuid())\n  telegramId       String     @unique\n  firstName        String?\n  lastName         String?\n  username         String?\n  balance          Int        @default(0)\n  withdrawalAmount Int        @default(0)\n  isActive         Boolean    @default(true)\n  lastSeenAt       DateTime?\n  payments         Payment[]  @relation(\"UserById\")\n  telegramPayments Payment[]  @relation(\"UserByTelegramId\")\n  invoices         Invoice[]\n  createdAt        DateTime   @default(now())\n  updatedAt        DateTime   @updatedAt\n  purchases        Purchase[]\n}\n\nmodel Purchase {\n  id         String   @id @default(cuid())\n  userId     String\n  user       User     @relation(fields: [userId], references: [id])\n  itemId     String\n  itemName   String\n  itemSecret String\n  createdAt  DateTime @default(now())\n}\n\nmodel Invoice {\n  id          String   @id @default(cuid())\n  userId      String\n  user        User     @relation(fields: [userId], references: [id])\n  title       String\n  description String\n  currency    String\n  amount      Int\n  status      String // e.g., \"PENDING\", \"PAID\", \"CANCELLED\"\n  payment     Payment?\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n}\n\nmodel Payment {\n  id            String   @id @default(cuid())\n  userId        String\n  user          User     @relation(\"UserById\", fields: [userId], references: [id])\n  invoiceId     String?  @unique\n  invoice       Invoice? @relation(fields: [invoiceId], references: [id])\n  telegramId    String\n  telegramUser  User     @relation(\"UserByTelegramId\", fields: [telegramId], references: [telegramId])\n  transactionId String   @unique\n  productName   String\n  itemId        String\n  amount        Int\n  status        String // e.g., \"PENDING\", \"COMPLETED\", \"REFUNDED\"\n  createdAt     DateTime @default(now())\n\n  @@unique([itemId, transactionId], name: \"itemid_transactionId\")\n}\n",
   "inlineSchemaHash": "3013d3aba5ef8fe0b6a0cec4de69b664f756f151095d13407f893af82aaf533a",
-  "copyEngine": false
+  "copyEngine": true
 }
 
 const fs = require('fs')
@@ -250,3 +250,9 @@ const PrismaClient = getPrismaClient(config)
 exports.PrismaClient = PrismaClient
 Object.assign(exports, Prisma)
 
+// file annotations for bundling tools to include these files
+path.join(__dirname, "query_engine-windows.dll.node");
+path.join(process.cwd(), "prisma/app/generated-prisma-client/query_engine-windows.dll.node")
+// file annotations for bundling tools to include these files
+path.join(__dirname, "schema.prisma");
+path.join(process.cwd(), "prisma/app/generated-prisma-client/schema.prisma")
