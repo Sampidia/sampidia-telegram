@@ -48,8 +48,8 @@ bot.command("send1000", (ctx) => createInvoice(ctx, "1000 Stars ⭐", "$8", 1000
 
 // Pre-checkout query handler
 bot.on("pre_checkout_query", (ctx) => {
-  return ctx.answerPreCheckoutQuery(true).catch(() => {
-    console.error("answerPreCheckoutQuery failed");
+  return ctx.answerPreCheckoutQuery(true).catch((error) => {
+    console.error("answerPreCheckoutQuery failed:", error);
   });
 });
 
@@ -66,7 +66,7 @@ bot.on("message:successful_payment", async (ctx) => {
     // Store payment in database
     await prisma.payment.create({
       data: {
-        userId: ctx.from.id.toString(), // Add userId here
+        userId: ctx.from.id.toString(),
         telegramId: ctx.from.id.toString(),
         transactionId: payment.telegram_payment_charge_id,
         productName: payment.total_amount ? `${payment.total_amount} Stars` : 'Stars',
@@ -91,8 +91,6 @@ bot.on("message:successful_payment", async (ctx) => {
         lastSeenAt: new Date()
       }
     });
-
-    console.log('Payment processed successfully:', payment);
     
     // Send confirmation message
     await ctx.reply(`✅ Payment successful! You've purchased ${payment.total_amount} Stars. Your balance has been updated.`);

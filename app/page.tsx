@@ -20,7 +20,7 @@ export default function Home() {
   const [userBalance, setUserBalance] = useState<number>(0);
   const [balanceError, setBalanceError] = useState<string | null>(null);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPurchases, setIsLoadingPurchases] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
@@ -124,20 +124,25 @@ export default function Home() {
         // Check if running within Telegram
         const isTelegram = WebApp.isExpanded !== undefined;
         
+        console.log('Telegram detection:', { isTelegram });
+        
         if (isTelegram) {
           // Initialize Telegram Web App
           WebApp.ready();
           WebApp.expand();
+          
+          console.log('WebApp initDataUnsafe:', WebApp.initDataUnsafe);
           
           // Get user ID from initData
           if (WebApp.initDataUnsafe && WebApp.initDataUnsafe.user) {
             // Access user data directly from the WebApp object
             const user = WebApp.initDataUnsafe.user;
             const currentUserId = user.id?.toString() || '';
+            console.log('Real Telegram user found:', user);
             setUserId(currentUserId);
             setUserFirstName(user.first_name || '');
             setUserTelegramId(user.id?.toString() || '');
-
+            
 
             // Call API to save user data to database
             try {
@@ -158,20 +163,24 @@ export default function Home() {
             }
 
           } else {
-            setError('No user data available from Telegram');
-            setIsLoading(false);
+            // No user data from Telegram - show error
+            console.log('No user data from Telegram');
+            setError('Unable to get user data from Telegram. Please make sure you are accessing this app through Telegram.');
+            return;
           }
         } else {
-          // Not in Telegram, set an error message
-          setError('This application can only be accessed from within Telegram');
-          setIsLoading(false);
+          // Not in Telegram - show error
+          console.log('Not running in Telegram');
+          setError('This app must be accessed through Telegram. Please open it from the Telegram bot.');
+          return;
         }
 
+        // Always set initialized and clear loading - never set error for missing user data
         setInitialized(true);
-        setIsLoading(false); // Set loading to false after initialization
+        setIsLoading(false);
       } catch (e) {
         console.error('Failed to initialize Telegram Web App:', e);
-        setError('Failed to initialize Telegram Web App');
+        setError('Failed to initialize Telegram Web App. Please try refreshing the page.');
         setInitialized(true);
         setIsLoading(false);
       }
@@ -181,22 +190,35 @@ export default function Home() {
   }, []);
 
   const fetchUserBalance = useCallback(async () => {
-    if (!userTelegramId) return;
+    if (!userTelegramId) {
+      console.log('fetchUserBalance: No userTelegramId available');
+      return;
+    }
+    
+    console.log('fetchUserBalance: Starting fetch for telegramId:', userTelegramId);
     setBalanceError(null);
+    
     try {
-      const response = await fetch(
-        `/api/user-balance?userId=${encodeURIComponent(userTelegramId)}`,
-        { method: 'GET', cache: 'no-store' }
-      );
+      const url = `/api/user-balance?userId=${encodeURIComponent(userTelegramId)}`;
+      console.log('fetchUserBalance: Fetching URL:', url);
+      
+      const response = await fetch(url, { method: 'GET', cache: 'no-store' });
+      console.log('fetchUserBalance: Response status:', response.status);
+      
       if (!response.ok) {
         let serverMsg = '';
         try { serverMsg = (await response.json()).error || ''; } catch {}
         throw new Error(serverMsg || `Request failed with status ${response.status}`);
       }
+      
       const data = await response.json();
-      setUserBalance(Number(data?.userBalance ?? 0));
+      console.log('fetchUserBalance: Response data:', data);
+      
+      const balance = Number(data?.userBalance ?? 0);
+      console.log('fetchUserBalance: Setting balance to:', balance);
+      setUserBalance(balance);
     } catch (e) {
-      console.error('Error fetching user balance:', e);
+      console.error('fetchUserBalance: Error occurred:', e);
       setBalanceError(e instanceof Error ? e.message : 'Could not fetch balance');
     }
   }, [userTelegramId]);
@@ -377,7 +399,7 @@ export default function Home() {
     return <LoadingState />;
   }
 
-  // Error state (including not in Telegram)
+  // Show error state if there's an error
   if (error) {
     return <ErrorState error={error} onRetry={handleRetry} />;
   }
@@ -469,7 +491,7 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="bg-black text-white w-16 h-16 flex items-center justify-center rounded-full text-2xl"
                 >
-                  <svg version="1.1" id="Icons" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" xmlSpace="preserve" style={{ color: 'white', width: '24px', height: '24px' }}><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M5,17.4v-3.5C5,7.9,9.9,3,16,3s11,4.9,11,10.9l0,3.5"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M27,15v3.4C27,24.3,22.1,29,16,29l0-2l3,0"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M9,22v-8c-2.2,0-4,1.8-4,4S6.8,22,9,22z"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M23,14v8c2.2,0,4-1.8,4-4S25.2,14,23,14z"></path> </g></svg> {/* Chat/Support icon */}
+                  <svg version="1.1" id="Icons" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" xmlSpace="preserve" style={{ color: 'white', width: '24px', height: '24px' }}><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M5,17.4v-3.5C5,7.9,9.9,3,16,3s11,4.9,11,10.9l0,3.5"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M27,15v3.4C27,24.3,22.1,29,16,29l0-2l3,0"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M9,22v-8c-2.2,0-4,1.8-4,4S6.8,22,9,22z"></path> <path style={{ fill: 'none', stroke: '#ffffff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', strokeMiterlimit: 10 }} d="M23,14v8c2.2,0,4-1.8-4-4S25.2,14,23,14z"></path> </g></svg> {/* Chat/Support icon */}
                 </a>
                 <span className="mt-2 text-center text-sm">Support</span>
               </div>

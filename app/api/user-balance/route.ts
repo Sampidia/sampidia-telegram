@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { withAccelerate } from '@prisma/extension-accelerate'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+// Create Prisma client with Accelerate extension
+const prisma = new PrismaClient({
+  datasourceUrl: process.env.DATABASE_URL,
+  log: ['error'],
+}).$extends(withAccelerate())
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,21 +20,37 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // Find or create user by Telegram ID to ensure a balance is always available
-    const user = await prisma.user.upsert({
+    // Find user by Telegram ID
+    const user = await prisma.user.findUnique({
       where: { telegramId: String(userId) },
-      update: {},
-      create: { telegramId: String(userId) },
-      select: { balance: true },
+      select: { balance: true, telegramId: true, firstName: true }
     });
 
-    const userBalance = user.balance ?? 0;
-    return NextResponse.json(
-      { userBalance },
-      { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
-    );
+    if (user) {
+      return NextResponse.json(
+        { userBalance: user.balance },
+        { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
+      );
+    } else {
+      // Create new user with default balance
+      const newUser = await prisma.user.create({
+        data: {
+          telegramId: String(userId),
+          firstName: 'New User',
+          balance: 0
+        },
+        select: { balance: true }
+      });
+      
+      return NextResponse.json(
+        { userBalance: newUser.balance },
+        { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
+      );
+    }
   } catch (error) {
-    console.error('Error fetching user balance:', error);
-    return NextResponse.json({ error: 'Failed to fetch user balance' }, { status: 500 });
+    console.error('Error in user-balance route:', error);
+    return NextResponse.json({ 
+      error: 'Failed to fetch user balance'
+    }, { status: 500 });
   }
 }

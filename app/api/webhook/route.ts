@@ -8,7 +8,6 @@ const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "
 
 // Handle pre-checkout queries
 bot.on("pre_checkout_query", (ctx) => {
-  console.log('Pre-checkout query received:', ctx.preCheckoutQuery);
   return ctx.answerPreCheckoutQuery(true).catch((error) => {
     console.error("answerPreCheckoutQuery failed:", error);
   });
@@ -17,16 +16,12 @@ bot.on("pre_checkout_query", (ctx) => {
 // Handle successful payments
 bot.on("message:successful_payment", async (ctx) => {
   if (!ctx.message || !ctx.message.successful_payment || !ctx.from) {
-    console.log('Missing payment data in webhook');
     return;
   }
 
   try {
     const payment = ctx.message.successful_payment;
-    console.log('Payment received via webhook:', payment);
-    
     const payload = JSON.parse(payment.invoice_payload || '{}');
-    console.log('Payment payload:', payload);
     
     // Validate required fields
     const userId = payload.userId || ctx.from.id.toString();
@@ -34,14 +29,6 @@ bot.on("message:successful_payment", async (ctx) => {
     const transactionId = payment.telegram_payment_charge_id;
     const amount = payment.total_amount || 0;
     const itemId = payload.itemId || 'unknown';
-    
-    console.log('Processing payment data:', {
-      userId,
-      telegramId,
-      transactionId,
-      amount,
-      itemId
-    });
     
     // First, ensure user exists and get their ID
     const user = await prisma.user.upsert({
@@ -56,11 +43,9 @@ bot.on("message:successful_payment", async (ctx) => {
         lastSeenAt: new Date()
       }
     });
-    
-    console.log('User created/updated via webhook:', user);
 
     // Store payment in database using the user's ID
-    const savedPayment = await prisma.payment.create({
+    await prisma.payment.create({
       data: {
         userId: user.id,
         telegramId: telegramId,
@@ -72,19 +57,10 @@ bot.on("message:successful_payment", async (ctx) => {
       },
     });
     
-    console.log('Payment saved to database via webhook:', savedPayment);
-    
-    console.log('Payment processed successfully via webhook');
-    
     // Send confirmation message to the user
     await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
   } catch (error) {
     console.error('Error processing payment via webhook:', error);
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack trace',
-      name: error instanceof Error ? error.name : 'Unknown error type'
-    });
     
     // Send a more user-friendly error message
     await ctx.reply(`✅ Payment received! We're processing your purchase and will update your balance shortly.`);
