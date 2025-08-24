@@ -1,0 +1,22 @@
+
+
+async function main() {
+  // ... you will write your Prisma Client queries here
+  async function main() {
+  await prisma.user.create({
+    data: {
+      telegramId: 'Rich2ggff345',
+        
+    },
+  })
+  }
+}
+main()
+  .then(async () => {
+    await prisma.$disconnect()
+  })
+  .catch(async (e) => {
+    console.error(e)
+    await prisma.$disconnect()
+    process.exit(1)
+  })
