@@ -181,11 +181,11 @@ export default function Home() {
   }, []);
 
   const fetchUserBalance = useCallback(async () => {
-    if (!userId) return;
+    if (!userTelegramId) return;
     setBalanceError(null);
     try {
       const response = await fetch(
-        `/api/user-balance?userId=${encodeURIComponent(userId)}`,
+        `/api/user-balance?userId=${encodeURIComponent(userTelegramId)}`,
         { method: 'GET', cache: 'no-store' }
       );
       if (!response.ok) {
@@ -199,7 +199,7 @@ export default function Home() {
       console.error('Error fetching user balance:', e);
       setBalanceError(e instanceof Error ? e.message : 'Could not fetch balance');
     }
-  }, [userId]);
+  }, [userTelegramId]);
 
   const fetchPurchases = useCallback(async () => {
     if (!userId) return;
@@ -225,10 +225,10 @@ export default function Home() {
 
   // Fetch user balance
   useEffect(() => {
-    if (initialized && userId) {
+    if (initialized && userTelegramId) {
       fetchUserBalance();
     }
-  }, [initialized, userId, fetchUserBalance]);
+  }, [initialized, userTelegramId, fetchUserBalance]);
 
   // Fetch purchase history
   useEffect(() => {
@@ -252,7 +252,7 @@ export default function Home() {
 
   // Set up periodic balance updates
   useEffect(() => {
-    if (initialized && userId) {
+    if (initialized && userTelegramId) {
       // Update balance every 30 seconds
       const interval = setInterval(() => {
         fetchUserBalance();
@@ -260,7 +260,7 @@ export default function Home() {
 
       return () => clearInterval(interval);
     }
-  }, [initialized, userId]);
+  }, [initialized, userTelegramId, fetchUserBalance]);
 
   
   

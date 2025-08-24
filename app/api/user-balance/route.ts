@@ -15,14 +15,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // Find user by Telegram ID
-    const user = await prisma.user.findUnique({
+    // Find or create user by Telegram ID to ensure a balance is always available
+    const user = await prisma.user.upsert({
       where: { telegramId: String(userId) },
-      select: { balance: true }
+      update: {},
+      create: { telegramId: String(userId) },
+      select: { balance: true },
     });
 
-    // Return balance (0 if user not found)
-    const userBalance = user?.balance ?? 0;
+    const userBalance = user.balance ?? 0;
     return NextResponse.json(
       { userBalance },
       { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
