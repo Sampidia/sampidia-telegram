@@ -184,13 +184,17 @@ export default function Home() {
     if (!userId) return;
     setBalanceError(null);
     try {
-      const response = await fetch(`/api/user-balance?userId=${userId}`);
+      const response = await fetch(
+        `/api/user-balance?userId=${encodeURIComponent(userId)}`,
+        { method: 'GET', cache: 'no-store' }
+      );
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Request failed with status ${response.status}`);
+        let serverMsg = '';
+        try { serverMsg = (await response.json()).error || ''; } catch {}
+        throw new Error(serverMsg || `Request failed with status ${response.status}`);
       }
       const data = await response.json();
-      setUserBalance(data.userBalance);
+      setUserBalance(Number(data?.userBalance ?? 0));
     } catch (e) {
       console.error('Error fetching user balance:', e);
       setBalanceError(e instanceof Error ? e.message : 'Could not fetch balance');
