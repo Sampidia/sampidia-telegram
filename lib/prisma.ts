@@ -34,11 +34,15 @@ const withValidation = {
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
 function createPrismaClient() {
-  let client = new PrismaClient()
-  // Enable Accelerate only if configured
+  // Use a plain Postgres URL by default; only enable Accelerate if explicitly configured
+  const datasourceUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL
+
+  let client = new PrismaClient({ datasourceUrl })
+
   if (process.env.PRISMA_ACCELERATE_URL) {
     client = client.$extends(withAccelerate()) as unknown as PrismaClient
   }
+
   // Always apply validation
   return client.$extends(withValidation) as unknown as PrismaClient
 }
