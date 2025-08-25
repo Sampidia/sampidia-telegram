@@ -1,11 +1,10 @@
 datasource db {
   provider = "postgresql" // or "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("PRISMA_DATABASE_URL")
 }
 
 generator nextjs {
-  provider = "prisma-client-js" // or "prisma-client" if using the new generator
-  output   = "app/generated-prisma-client"
+  provider = "prisma-client-js"
 }
 
 model User {
