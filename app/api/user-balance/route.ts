@@ -156,8 +156,7 @@ export async function GET(req: NextRequest) {
       
       // Return a default balance for known test users
       const fallbackBalances: Record<string, number> = {
-        '2111112': 50,
-        '21155555': 100
+        '': 0,
       };
       
       const fallbackBalance = fallbackBalances[userId || ''] || 0;
