@@ -39,12 +39,12 @@ const createInvoice = (ctx: any, itemName: string, itemDescription: string, amou
 };
 
 // Star purchase commands
-bot.command("send1", (ctx) => createInvoice(ctx, "1 Star ✨", "$0.008", 1));
-bot.command("send25", (ctx) => createInvoice(ctx, "25 Stars 🌟", "$0.2", 25));
-bot.command("send50", (ctx) => createInvoice(ctx, "50 Stars ⭐", "$0.4", 50));
-bot.command("send100", (ctx) => createInvoice(ctx, "100 Stars ⭐", "$0.8", 100));
-bot.command("send500", (ctx) => createInvoice(ctx, "500 Stars ⭐", "$4", 500));
-bot.command("send1000", (ctx) => createInvoice(ctx, "1000 Stars ⭐", "$8", 1000));
+bot.command("send1", (ctx) => createInvoice(ctx, "1 Star ✨", "$0.009", 1));
+bot.command("send25", (ctx) => createInvoice(ctx, "25 Stars 🌟", "$0.225", 25));
+bot.command("send50", (ctx) => createInvoice(ctx, "50 Stars ⭐", "$0.45", 50));
+bot.command("send100", (ctx) => createInvoice(ctx, "100 Stars ⭐", "$0.9", 100));
+bot.command("send500", (ctx) => createInvoice(ctx, "500 Stars ⭐", "$4.5", 500));
+bot.command("send1000", (ctx) => createInvoice(ctx, "1000 Stars ⭐", "$9", 1000));
 
 // Pre-checkout query handler
 bot.on("pre_checkout_query", (ctx) => {

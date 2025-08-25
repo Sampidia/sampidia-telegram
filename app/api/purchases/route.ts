@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: String(userId),
         telegramId: String(userId),
-        transactionId: 'generated-id',
+        transactionId: String(userId),
         productName: String(itemName),
         itemId: String(itemId),
         amount: 100,
@@ -41,15 +41,14 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-
+    const userId = req.nextUrl.searchParams.get('userId');
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
 
     const payments = await prisma.payment.findMany({
       where: {
-        userId: String(userId),
+        telegramId: String(userId),
       },
       orderBy: {
         createdAt: 'desc',
