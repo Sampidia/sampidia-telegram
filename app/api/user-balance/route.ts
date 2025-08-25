@@ -6,28 +6,17 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// Create Prisma client with better error handling and connection management
+// Create Prisma client with production database URL only
 let prisma: any = null;
 
 function getPrismaClient() {
   if (!prisma) {
     try {
-      // Try with Accelerate first (for production)
-      if (process.env.DATABASE_URL?.startsWith('prisma+postgres://')) {
-        console.log('API: Using Prisma Accelerate connection');
-        prisma = new PrismaClient({
-          datasourceUrl: process.env.DATABASE_URL,
-          log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-        }).$extends(withAccelerate());
-      } else {
-        // Fallback to direct connection
-        console.log('API: Using direct database connection');
-        const connectionUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.DIRECT_DATABASE_URL;
-        prisma = new PrismaClient({
-          datasourceUrl: connectionUrl,
-          log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-        });
-      }
+      console.log('API: Using production database connection');
+      prisma = new PrismaClient({
+        datasourceUrl: process.env.DATABASE_URL,
+        log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+      }).$extends(withAccelerate());
     } catch (error) {
       console.error('API: Failed to initialize Prisma client:', error);
       throw error;
@@ -54,9 +43,6 @@ export async function GET(req: NextRequest) {
     console.log('API: Environment check:');
     console.log('API: NODE_ENV:', process.env.NODE_ENV);
     console.log('API: DATABASE_URL exists:', !!process.env.DATABASE_URL);
-    console.log('API: DATABASE_URL type:', process.env.DATABASE_URL?.startsWith('prisma+postgres://') ? 'Accelerate' : 'Direct');
-    console.log('API: POSTGRES_URL exists:', !!process.env.POSTGRES_URL);
-    console.log('API: DIRECT_DATABASE_URL exists:', !!process.env.DIRECT_DATABASE_URL);
 
     const client = getPrismaClient();
     console.log('API: Prisma client initialized successfully');
@@ -149,35 +135,6 @@ export async function GET(req: NextRequest) {
       userId,
       responseTime
     });
-
-    // Fallback mechanism for production
-    if (process.env.NODE_ENV === 'production') {
-      console.log('API: Using fallback mechanism in production');
-      
-      // Return a default balance for known test users
-      const fallbackBalances: Record<string, number> = {
-        '': 0,
-      };
-      
-      const fallbackBalance = fallbackBalances[userId || ''] || 0;
-      
-      return NextResponse.json(
-        { 
-          userBalance: fallbackBalance,
-          dataSource: 'fallback',
-          error: 'Database temporarily unavailable',
-          responseTime: responseTime
-        },
-        { 
-          status: 200, 
-          headers: { 
-            'Cache-Control': 'no-store, max-age=0',
-            'X-Response-Time': `${responseTime}ms`,
-            'X-Fallback': 'true'
-          } 
-        }
-      );
-    }
     
     return NextResponse.json({ 
       error: 'Failed to fetch user balance',
