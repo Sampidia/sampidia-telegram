@@ -65,9 +65,9 @@ export default function PurchaseHistoryItem({
     <div className="flex items-center p-4 bg-white rounded-lg shadow-sm">
       <div className="text-2xl mr-3">{item?.icon || '🎁'}</div>
       <div className="flex-1">
-        <h3 className="font-medium">{getItemName()}</h3>
+        <h3 className="font-medium">{item?.name}</h3>
         <p className="text-xs tg-hint">
-          {new Date(purchase.timestamp).toLocaleString()}
+          {String(purchase.timestamp)}
         </p>
       </div>
       <div className="flex flex-col space-y-2">
