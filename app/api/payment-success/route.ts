@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
       itemPrice: item.price
     });
 
-    // For mini app payments, only update balance - let webhook create the payment record
-    // First, ensure user exists and get their ID
+    // For mini app payments, mark that balance update is in progress
+    // This will prevent the webhook from updating balance again
     const user = await prisma.user.upsert({
       where: { telegramId: String(userId) },
       update: {
