@@ -86,8 +86,8 @@ export async function POST(req: Request) {
 
     // Check user balance first
     const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { balance: true, username: true }
+      where: { telegramId: userId },
+      select: { id: true, balance: true, username: true }
     });
 
     if (!user) {
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
 
     // Update balance first
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id: user.id },
       data: { balance: user.balance - amount }
     });
 
