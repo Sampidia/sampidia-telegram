@@ -50,16 +50,22 @@ bot.on("message:successful_payment", async (ctx) => {
       return;
     }
 
+    // Check if this is a mini app payment (payload contains userId from mini app)
+    const isMiniAppPayment = payload.userId && payload.userId !== ctx.from.id.toString();
+    console.log('Payment type detection:', { isMiniAppPayment, payloadUserId: payload.userId, telegramId: ctx.from.id.toString() });
+
     // First, ensure user exists and get their ID
     const user = await prisma.user.upsert({
       where: { telegramId: telegramId },
       update: {
-        balance: { increment: amount },
+        // Only increment balance for non-mini-app payments (bot payments)
+        balance: isMiniAppPayment ? undefined : { increment: amount },
         lastSeenAt: new Date()
       },
       create: {
         telegramId: telegramId,
-        balance: amount,
+        // Only set initial balance for non-mini-app payments
+        balance: isMiniAppPayment ? 0 : amount,
         lastSeenAt: new Date()
       }
     });
@@ -67,7 +73,8 @@ bot.on("message:successful_payment", async (ctx) => {
     console.log('User upsert result:', {
       userId: user.id,
       telegramId: user.telegramId,
-      newBalance: user.balance
+      newBalance: user.balance,
+      isMiniAppPayment: isMiniAppPayment
     });
 
     // Store payment in database using the user's ID

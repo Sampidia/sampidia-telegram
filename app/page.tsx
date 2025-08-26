@@ -368,7 +368,7 @@ export default function Home() {
               body: JSON.stringify({
                 userId: userTelegramId,
                 itemId: item.id,
-                transactionId: `invoice_${Date.now()}_${Math.random().toString(36).substring(7)}`
+                transactionId: 'mini_app_pending' // Temporary ID until webhook provides real one
               })
             });
 

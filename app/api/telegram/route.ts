@@ -65,6 +65,17 @@ bot.on("message:successful_payment", async (ctx) => {
     const telegramId = ctx.from.id.toString();
     const amount = payment.total_amount || 0;
 
+    // Check if payment already exists to prevent double processing
+    const existingPayment = await prisma.payment.findUnique({
+      where: { transactionId: payment.telegram_payment_charge_id }
+    });
+
+    if (existingPayment) {
+      console.log('Payment already processed, skipping telegram API processing');
+      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+      return;
+    }
+
     // First, ensure user exists and get their ID
     const user = await prisma.user.upsert({
       where: { telegramId: telegramId },

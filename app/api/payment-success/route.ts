@@ -26,19 +26,7 @@ export async function POST(req: NextRequest) {
       itemPrice: item.price
     });
 
-    // Check if payment already exists to prevent double processing
-    const existingPayment = await prisma.payment.findUnique({
-      where: { transactionId: String(transactionId) }
-    });
-
-    if (existingPayment) {
-      console.log('Payment already processed, skipping payment-success processing');
-      return NextResponse.json({
-        success: true,
-        message: 'Payment already processed'
-      });
-    }
-
+    // For mini app payments, only update balance - let webhook create the payment record
     // First, ensure user exists and get their ID
     const user = await prisma.user.upsert({
       where: { telegramId: String(userId) },
@@ -53,23 +41,11 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    console.log('User upsert result:', {
+    console.log('Mini app payment - user balance updated:', {
       userId: user.id,
       telegramId: user.telegramId,
-      newBalance: user.balance
-    });
-
-    // Store payment in database using the user's ID
-    await prisma.payment.create({
-      data: {
-        userId: user.id,
-        telegramId: String(userId),
-        transactionId: String(transactionId),
-        productName: item.name,
-        itemId: String(itemId),
-        amount: item.price,
-        status: "COMPLETED",
-      },
+      newBalance: user.balance,
+      amount: item.price
     });
 
     console.log('Payment success transaction completed successfully');
