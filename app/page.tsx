@@ -357,15 +357,42 @@ export default function Home() {
         if (status === 'paid') {
           // Payment was successful
           console.log('Payment successful!');
-          
-          // Show success message
-          alert('✅ Payment successful! Your purchase has been completed.');
-          
-          // Refresh purchases to show the new purchase
-          await fetchPurchases();
-          
-          // Update user balance after successful payment
-          await fetchUserBalance();
+
+          try {
+            // Call our payment success API to update balance and create purchase record
+            const response = await fetch('/api/payment-success', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                userId: userTelegramId,
+                itemId: item.id,
+                transactionId: `invoice_${Date.now()}_${Math.random().toString(36).substring(7)}`
+              })
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              console.log('Payment success API response:', result);
+
+              // Show success message
+              alert('✅ Payment successful! Your purchase has been completed.');
+
+              // Refresh purchases to show the new purchase
+              await fetchPurchases();
+
+              // Update user balance after successful payment
+              await fetchUserBalance();
+            } else {
+              const error = await response.json();
+              console.error('Payment success API failed:', error);
+              alert('❌ Payment processed but balance update failed. Please contact support.');
+            }
+          } catch (error) {
+            console.error('Error calling payment success API:', error);
+            alert('❌ Payment processed but balance update failed. Please contact support.');
+          }
         } else if (status === 'failed') {
           alert('❌ Payment failed. Please try again.');
         } else if (status === 'cancelled') {

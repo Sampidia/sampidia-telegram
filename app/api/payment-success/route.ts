@@ -19,6 +19,13 @@ export async function POST(req: NextRequest) {
     // Generate a secret code for the purchase
     const secret = `SECRET_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
 
+    console.log('Payment success processing:', {
+      userId,
+      itemId,
+      transactionId,
+      itemPrice: item.price
+    });
+
     // Use a transaction to ensure atomicity
     await prisma.$transaction([
       prisma.payment.create({
@@ -34,7 +41,7 @@ export async function POST(req: NextRequest) {
       }),
       prisma.user.upsert({
         where: { telegramId: String(userId) },
-        update: { 
+        update: {
           balance: { increment: item.price },
           lastSeenAt: new Date()
         },
@@ -45,6 +52,8 @@ export async function POST(req: NextRequest) {
         }
       }),
     ]);
+
+    console.log('Payment success transaction completed successfully');
 
     return NextResponse.json({ 
       success: true, 
