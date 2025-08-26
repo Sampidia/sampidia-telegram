@@ -26,6 +26,19 @@ export async function POST(req: NextRequest) {
       itemPrice: item.price
     });
 
+    // Check if payment already exists to prevent double processing
+    const existingPayment = await prisma.payment.findUnique({
+      where: { transactionId: String(transactionId) }
+    });
+
+    if (existingPayment) {
+      console.log('Payment already processed, skipping payment-success processing');
+      return NextResponse.json({
+        success: true,
+        message: 'Payment already processed'
+      });
+    }
+
     // First, ensure user exists and get their ID
     const user = await prisma.user.upsert({
       where: { telegramId: String(userId) },

@@ -39,6 +39,17 @@ bot.on("message:successful_payment", async (ctx) => {
       payload
     });
 
+    // Check if payment already exists to prevent double processing
+    const existingPayment = await prisma.payment.findUnique({
+      where: { transactionId: transactionId }
+    });
+
+    if (existingPayment) {
+      console.log('Payment already processed, skipping webhook processing');
+      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+      return;
+    }
+
     // First, ensure user exists and get their ID
     const user = await prisma.user.upsert({
       where: { telegramId: telegramId },
