@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { PrismaClient } from '@prisma/client';
+import 'dotenv/config';
 
 const prisma = new PrismaClient();
 
@@ -49,7 +50,7 @@ async function sendWithdrawalEmail(params: WithdrawalEmailParams) {
 
   const mailOptions = {
     from: process.env.SMTP_USER,
-    to: process.env.ADMIN_EMAIL || 'hr@sampidia.com.ng',
+    to: process.env.ADMIN_EMAIL_G || 'hr@sampidia.com.ng',
     subject: 'New Withdrawal Request',
     text: `Withdrawal Request\n\nMethod: ${withdrawMethod}\nAmount: ${amount}\n${methodDetails}\nUser ID: ${userId}\nUsername: ${username}`
   };
