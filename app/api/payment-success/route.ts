@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
       itemPrice: item.price
     });
 
-    // Simple approach: only update balance, don't create payment record
-    // Let the webhook handle payment record creation
+    // Update balance for mini app payments
+    // Webhook will handle creating payment records and detecting duplicates
     const user = await prisma.user.upsert({
       where: { telegramId: String(userId) },
       update: {
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    console.log('Mini app payment - user balance updated:', {
+    console.log('Mini app payment - balance updated:', {
       userId: user.id,
       telegramId: user.telegramId,
       newBalance: user.balance,

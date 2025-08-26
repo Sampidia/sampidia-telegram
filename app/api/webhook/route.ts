@@ -50,37 +50,19 @@ bot.on("message:successful_payment", async (ctx) => {
       return;
     }
 
-    // Check if balance was recently updated (indicating mini app payment)
-    const existingUser = await prisma.user.findUnique({
-      where: { telegramId: telegramId },
-      select: {
-        balance: true,
-        updatedAt: true
-      }
-    });
-
-    const wasRecentlyUpdated = existingUser &&
-      (Date.now() - existingUser.updatedAt.getTime()) < 30000; // 30 seconds
-
     // First, ensure user exists and get their ID
     const user = await prisma.user.upsert({
       where: { telegramId: telegramId },
       update: {
-        // Only update balance if it wasn't recently updated (mini app payment)
-        balance: wasRecentlyUpdated ? undefined : { increment: amount },
+        balance: { increment: amount },
         lastSeenAt: new Date()
       },
       create: {
         telegramId: telegramId,
-        // Only set initial balance if it wasn't recently updated
-        balance: wasRecentlyUpdated ? 0 : amount,
+        balance: amount,
         lastSeenAt: new Date()
       }
     });
-
-    if (wasRecentlyUpdated) {
-      console.log('Balance was recently updated, webhook will only create payment record');
-    }
 
     console.log('User upsert result:', {
       userId: user.id,
