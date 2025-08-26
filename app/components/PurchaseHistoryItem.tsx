@@ -52,14 +52,14 @@ export default function PurchaseHistoryItem({
 
   // Helper function to safely format the timestamp
   const getFormattedDate = (): string => {
-    if (purchase.timestamp) {
-      const date = new Date(purchase.timestamp);
+    if (purchase.createdAt) {
+      const date = new Date(purchase.createdAt);
       // Check if the date is valid
       if (!isNaN(date.getTime())) {
         return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
       // If parsing fails, return the raw timestamp
-      return String(purchase.timestamp);
+      return String(purchase.createdAt);
     }
 
     return 'Date not available';
@@ -69,7 +69,7 @@ export default function PurchaseHistoryItem({
     <div className="flex items-center p-4 bg-white rounded-lg shadow-sm">
       <div className="text-2xl mr-3">{item?.icon || '🎁'}</div>
       <div className="flex-1">
-        <h3 className="font-medium">{getItemName()}</h3>
+        <h3 className="font-medium text-gray-900">{getItemName()}</h3>
         <p className="text-xs tg-hint">
           {getFormattedDate()}
         </p>

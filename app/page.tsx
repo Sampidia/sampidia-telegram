@@ -400,7 +400,7 @@ export default function Home() {
           purchase: {
             item,
             transactionId: purchase.transactionId,
-            timestamp: purchase.timestamp,
+            createdAt: purchase.createdAt,
             secret
           }
         });

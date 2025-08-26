@@ -5,7 +5,7 @@ import { Item } from '@/app/data/items';
 interface CurrentPurchaseWithSecret {
   item?: Item;
   transactionId: string;
-  timestamp: string;
+  createdAt: string;
   secret?: string;
 }
 
