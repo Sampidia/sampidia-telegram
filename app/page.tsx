@@ -9,6 +9,7 @@ import LoadingState from '@/app/components/LoadingState';
 import ErrorState from '@/app/components/ErrorState';
 import ItemsList from '@/app/components/ItemsList';
 import PurchaseHistory from '@/app/components/PurchaseHistory';
+import WithdrawalHistory from '@/app/components/WithdrawalHistory';
 import PurchaseSuccessModal from '@/app/components/PurchaseSuccessModal';
 import WithdrawalInstructionsModal from '@/app/components/WithdrawalInstructionsModal';
 
@@ -20,10 +21,13 @@ export default function Home() {
   const [userBalance, setUserBalance] = useState<number>(0);
   const [balanceError, setBalanceError] = useState<string | null>(null);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false); // Force loading to false
   const [isLoadingPurchases, setIsLoadingPurchases] = useState(false);
+  const [isLoadingWithdrawals, setIsLoadingWithdrawals] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
   const [modalState, setModalState] = useState<{
     type: 'purchase' | 'withdraw' | null;
     purchase?: CurrentPurchaseWithSecret;
@@ -251,6 +255,28 @@ export default function Home() {
     }
   }, [userId]);
 
+  const fetchWithdrawals = useCallback(async () => {
+    if (!userTelegramId) return;
+
+    setIsLoadingWithdrawals(true);
+    setWithdrawalError(null);
+    try {
+      const response = await fetch(`/api/withdrawals?telegramId=${userTelegramId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch withdrawals');
+      }
+
+      const data = await response.json();
+      setWithdrawals(data.withdrawals || []);
+    } catch (e) {
+      console.error('Error fetching withdrawals:', e);
+      setWithdrawalError('Failed to load withdrawal history');
+      setWithdrawals([]);
+    } finally {
+      setIsLoadingWithdrawals(false);
+    }
+  }, [userTelegramId]);
+
   // Fetch user balance
   useEffect(() => {
     if (initialized && userTelegramId) {
@@ -264,6 +290,13 @@ export default function Home() {
       fetchPurchases();
     }
   }, [initialized, userId, fetchPurchases]);
+
+  // Fetch withdrawal history
+  useEffect(() => {
+    if (initialized && userTelegramId) {
+      fetchWithdrawals();
+    }
+  }, [initialized, userTelegramId, fetchWithdrawals]);
 
   // Add a timeout to prevent infinite loading
   useEffect(() => {
@@ -621,6 +654,13 @@ export default function Home() {
               isLoading={isLoadingPurchases}
               onRetry={handleRetryPurchases}
               error={purchaseError}
+            />
+
+            <WithdrawalHistory
+              withdrawals={withdrawals}
+              isLoading={isLoadingWithdrawals}
+              onRetry={fetchWithdrawals}
+              error={withdrawalError}
             />
           </>
         )}

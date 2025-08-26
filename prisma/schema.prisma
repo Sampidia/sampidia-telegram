@@ -23,6 +23,7 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   purchases  Purchase[]
+  withdrawals Withdrawal[]
 }
 
 model Purchase {
@@ -55,7 +56,7 @@ model Payment {
   user                    User     @relation("UserById", fields: [userId], references: [id])
   invoiceId               String?  @unique
   invoice                 Invoice? @relation(fields: [invoiceId], references: [id])
-  telegramId             String   
+  telegramId             String
   telegramUser            User     @relation("UserByTelegramId", fields: [telegramId ], references: [telegramId])
   transactionId String   @unique
   productName             String
@@ -65,4 +66,20 @@ model Payment {
   createdAt               DateTime @default(now())
 
   @@unique([itemId, transactionId], name: "itemid_transactionId")
+}
+
+model Withdrawal {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  amount          Int
+  withdrawMethod  String   // 'bank' or 'ton'
+  bankName        String?
+  accountNumber   String?
+  accountName     String?
+  tonAddress      String?
+  status          String   @default("PENDING") // PENDING, COMPLETED, FAILED
+  emailSent       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  processedAt     DateTime?
 }
