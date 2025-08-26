@@ -76,33 +76,6 @@ bot.on("message:successful_payment", async (ctx) => {
       return;
     }
 
-    // Check if there's already a mini_app_pending payment for this user (recent)
-    const pendingMiniAppPayment = await prisma.payment.findFirst({
-      where: {
-        telegramId: telegramId,
-        transactionId: {
-          startsWith: 'mini_app_pending'
-        },
-        createdAt: {
-          gte: new Date(Date.now() - 60000) // Last 60 seconds
-        }
-      }
-    });
-
-    if (pendingMiniAppPayment) {
-      console.log('Mini app payment already being processed, telegram API will only create final payment record');
-      // Update the pending payment to completed
-      await prisma.payment.update({
-        where: { id: pendingMiniAppPayment.id },
-        data: {
-          transactionId: payment.telegram_payment_charge_id,
-          status: "COMPLETED",
-        },
-      });
-      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
-      return;
-    }
-
     // First, ensure user exists and get their ID
     const user = await prisma.user.upsert({
       where: { telegramId: telegramId },
@@ -118,6 +91,28 @@ bot.on("message:successful_payment", async (ctx) => {
         lastSeenAt: new Date()
       }
     });
+
+    // Check if balance was recently updated (indicating mini app payment)
+    const wasRecentlyUpdated = user.updatedAt &&
+      (Date.now() - user.updatedAt.getTime()) < 30000; // 30 seconds
+
+    if (wasRecentlyUpdated) {
+      console.log('Balance was recently updated, telegram API will only create payment record');
+      // Create payment record without updating balance
+      await prisma.payment.create({
+        data: {
+          userId: user.id,
+          telegramId: telegramId,
+          transactionId: payment.telegram_payment_charge_id,
+          productName: amount ? `${amount} Stars` : 'Stars',
+          itemId: payload.itemId || 'unknown',
+          amount: amount,
+          status: "COMPLETED",
+        },
+      });
+      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+      return;
+    }
 
     console.log('User upsert result:', {
       userId: user.id,

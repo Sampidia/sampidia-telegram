@@ -157,33 +157,6 @@ bot.on("message:successful_payment", async (ctx) => {
       return;
     }
 
-    // Check if there's already a mini_app_pending payment for this user (recent)
-    const pendingMiniAppPayment = await prisma.payment.findFirst({
-      where: {
-        telegramId: telegramId,
-        transactionId: {
-          startsWith: 'mini_app_pending'
-        },
-        createdAt: {
-          gte: new Date(Date.now() - 60000) // Last 60 seconds
-        }
-      }
-    });
-
-    if (pendingMiniAppPayment) {
-      console.log('Mini app payment already being processed, bot will only update payment record');
-      // Update the pending payment to completed
-      await prisma.payment.update({
-        where: { id: pendingMiniAppPayment.id },
-        data: {
-          transactionId: transactionId,
-          status: "COMPLETED",
-        },
-      });
-      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
-      return;
-    }
-
     // Check if user exists
     let user = await prisma.user.findUnique({
       where: { telegramId: telegramId },
@@ -211,6 +184,28 @@ bot.on("message:successful_payment", async (ctx) => {
         },
       });
       console.log('New user created:', user);
+    }
+
+    // Check if balance was recently updated (indicating mini app payment)
+    const wasRecentlyUpdated = user.updatedAt &&
+      (Date.now() - user.updatedAt.getTime()) < 30000; // 30 seconds
+
+    if (wasRecentlyUpdated) {
+      console.log('Balance was recently updated, bot will only create payment record');
+      // Create payment record without updating balance
+      await prisma.payment.create({
+        data: {
+          userId: user.id,
+          telegramId: telegramId,
+          transactionId: transactionId,
+          productName: amount ? `${amount} Stars` : 'Stars',
+          itemId: itemId,
+          amount: amount,
+          status: "COMPLETED",
+        },
+      });
+      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+      return;
     }
 
     // Store payment in database using the user's ID

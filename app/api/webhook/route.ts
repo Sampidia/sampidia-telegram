@@ -50,49 +50,36 @@ bot.on("message:successful_payment", async (ctx) => {
       return;
     }
 
-    // First, ensure user exists and get their ID (don't update balance here)
+    // Check if balance was recently updated (indicating mini app payment)
+    const existingUser = await prisma.user.findUnique({
+      where: { telegramId: telegramId },
+      select: {
+        balance: true,
+        updatedAt: true
+      }
+    });
+
+    const wasRecentlyUpdated = existingUser &&
+      (Date.now() - existingUser.updatedAt.getTime()) < 30000; // 30 seconds
+
+    // First, ensure user exists and get their ID
     const user = await prisma.user.upsert({
       where: { telegramId: telegramId },
       update: {
+        // Only update balance if it wasn't recently updated (mini app payment)
+        balance: wasRecentlyUpdated ? undefined : { increment: amount },
         lastSeenAt: new Date()
       },
       create: {
         telegramId: telegramId,
-        balance: 0, // Don't set initial balance here
+        // Only set initial balance if it wasn't recently updated
+        balance: wasRecentlyUpdated ? 0 : amount,
         lastSeenAt: new Date()
       }
     });
 
-    // Check if there's already a mini_app_pending payment for this user (recent)
-    const pendingMiniAppPayment = await prisma.payment.findFirst({
-      where: {
-        telegramId: telegramId,
-        transactionId: {
-          startsWith: 'mini_app_pending'
-        },
-        createdAt: {
-          gte: new Date(Date.now() - 60000) // Last 60 seconds
-        }
-      }
-    });
-
-    if (pendingMiniAppPayment) {
-      console.log('Mini app payment already being processed, webhook will only create final payment record');
-      // Don't update balance, just create the final payment record
-      await prisma.payment.create({
-        data: {
-          userId: user.id,
-          telegramId: telegramId,
-          transactionId: transactionId,
-          productName: amount ? `${amount} Stars` : 'Stars',
-          itemId: itemId,
-          amount: amount,
-          status: "COMPLETED",
-        },
-      });
-      console.log('Final payment record created by webhook');
-      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
-      return;
+    if (wasRecentlyUpdated) {
+      console.log('Balance was recently updated, webhook will only create payment record');
     }
 
     console.log('User upsert result:', {
