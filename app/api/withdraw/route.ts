@@ -194,25 +194,21 @@ export async function POST(req: Request) {
       try {
         await sendTelegramMessage(
           userId,
-          `✅ *Withdrawal Processed!*\n\n` +
+          `✅ *Withdrawal Request Submitted!*\n\n` +
           `Method: *${withdrawMethod}*\n` +
           `Amount: *${amount.toLocaleString()} points*\n\n` +
           `New Balance: *${newBalance.toLocaleString()} points*\n\n` +
-          `Status: Processing`,
+          `Status: *PENDING* - Waiting for admin approval`,
           { parse_mode: 'Markdown' }
         );
       } catch (telegramError) {
         console.error('Failed to send Telegram message:', telegramError);
       }
 
-      // Update withdrawal status to completed
-      await prisma.$queryRawUnsafe(
-        'UPDATE "Withdrawal" SET "status" = $1, "processedAt" = NOW() WHERE "id" = $2',
-        'COMPLETED',
-        withdrawalId
-      );
-
-      console.log('Withdrawal completed successfully:', withdrawalId);
+      // Keep withdrawal status as PENDING until admin processes it
+      // Only mark email as sent, but don't change status to completed
+      console.log('Withdrawal request created successfully with ID:', withdrawalId);
+      console.log('Status remains PENDING until admin processes the withdrawal');
 
       return NextResponse.json({
         success: true,
