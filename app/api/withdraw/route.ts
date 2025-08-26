@@ -28,11 +28,19 @@ async function sendWithdrawalEmail(params: WithdrawalEmailParams) {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT),
-    secure: process.env.SMTP_SECURE === 'true',
+    secure: false, // Use STARTTLS instead of SMTPS
+    requireTLS: true, // Force TLS upgrade
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    tls: {
+      ciphers: 'SSLv3',
+      rejectUnauthorized: false, // For self-signed certificates
+    },
+    connectionTimeout: 60000, // 60 seconds
+    greetingTimeout: 30000, // 30 seconds
+    socketTimeout: 60000, // 60 seconds
   });
 
   const methodDetails = withdrawMethod === 'bank'
@@ -41,7 +49,7 @@ async function sendWithdrawalEmail(params: WithdrawalEmailParams) {
 
   const mailOptions = {
     from: process.env.SMTP_USER,
-    to: 'sampidia0@gmail.com',
+    to: process.env.ADMIN_EMAIL || 'hr@sampidia.com.ng',
     subject: 'New Withdrawal Request',
     text: `Withdrawal Request\n\nMethod: ${withdrawMethod}\nAmount: ${amount}\n${methodDetails}\nUser ID: ${userId}\nUsername: ${username}`
   };
@@ -56,20 +64,21 @@ async function sendWithdrawalEmail(params: WithdrawalEmailParams) {
     const result = await transporter.sendMail(mailOptions);
     console.log('✅ Withdrawal email sent successfully:', result.messageId);
     return result;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('❌ Failed to send withdrawal email:', err);
+    const error = err as Error & { code?: string; response?: string; responseCode?: number };
     console.error('Error details:', {
-      code: err?.code,
-      response: err?.response,
-      responseCode: err?.responseCode,
-      message: err?.message
+      code: error?.code,
+      response: error?.response,
+      responseCode: error?.responseCode,
+      message: error?.message
     });
     throw err;
   }
 }
 
 // Helper function for sending Telegram message (mock implementation)
-async function sendTelegramMessage(userId: string, message: string, options?: Record<string, unknown>) {
+async function sendTelegramMessage(userId: string, message: string) {
   try {
     // Implement your Telegram message sending logic here
     // This is a placeholder - replace with your actual Telegram API call
@@ -198,8 +207,7 @@ export async function POST(req: Request) {
           `Method: *${withdrawMethod}*\n` +
           `Amount: *${amount.toLocaleString()} points*\n\n` +
           `New Balance: *${newBalance.toLocaleString()} points*\n\n` +
-          `Status: *PENDING* - Waiting for admin approval`,
-          { parse_mode: 'Markdown' }
+          `Status: *PENDING* - Waiting for admin approval`
         );
       } catch (telegramError) {
         console.error('Failed to send Telegram message:', telegramError);
