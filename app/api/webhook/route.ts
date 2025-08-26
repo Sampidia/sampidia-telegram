@@ -63,6 +63,38 @@ bot.on("message:successful_payment", async (ctx) => {
       }
     });
 
+    // Check if there's already a mini_app_pending payment for this user (recent)
+    const pendingMiniAppPayment = await prisma.payment.findFirst({
+      where: {
+        telegramId: telegramId,
+        transactionId: {
+          startsWith: 'mini_app_pending'
+        },
+        createdAt: {
+          gte: new Date(Date.now() - 60000) // Last 60 seconds
+        }
+      }
+    });
+
+    if (pendingMiniAppPayment) {
+      console.log('Mini app payment already being processed, webhook will only create final payment record');
+      // Don't update balance, just create the final payment record
+      await prisma.payment.create({
+        data: {
+          userId: user.id,
+          telegramId: telegramId,
+          transactionId: transactionId,
+          productName: amount ? `${amount} Stars` : 'Stars',
+          itemId: itemId,
+          amount: amount,
+          status: "COMPLETED",
+        },
+      });
+      console.log('Final payment record created by webhook');
+      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+      return;
+    }
+
     console.log('User upsert result:', {
       userId: user.id,
       telegramId: user.telegramId,

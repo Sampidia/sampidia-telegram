@@ -26,25 +26,68 @@ export async function POST(req: NextRequest) {
       itemPrice: item.price
     });
 
-    // For mini app payments, mark that balance update is in progress
-    // This will prevent the webhook from updating balance again
-    const user = await prisma.user.upsert({
-      where: { telegramId: String(userId) },
-      update: {
-        balance: { increment: item.price },
-        lastSeenAt: new Date()
-      },
-      create: {
-        telegramId: String(userId),
-        balance: item.price,
-        lastSeenAt: new Date()
+    // Use transaction with row locking to prevent double balance updates
+    const result = await prisma.$transaction(async (tx) => {
+      // First, try to find existing payment with this transactionId pattern
+      const existingPayment = await tx.payment.findFirst({
+        where: {
+          telegramId: String(userId),
+          transactionId: {
+            startsWith: 'mini_app_pending'
+          },
+          createdAt: {
+            gte: new Date(Date.now() - 30000) // Last 30 seconds
+          }
+        }
+      });
+
+      if (existingPayment) {
+        console.log('Mini app payment already being processed, skipping');
+        return null;
       }
+
+      // Update user balance
+      const user = await tx.user.upsert({
+        where: { telegramId: String(userId) },
+        update: {
+          balance: { increment: item.price },
+          lastSeenAt: new Date()
+        },
+        create: {
+          telegramId: String(userId),
+          balance: item.price,
+          lastSeenAt: new Date()
+        }
+      });
+
+      // Create a temporary payment record to prevent double processing
+      await tx.payment.create({
+        data: {
+          userId: user.id,
+          telegramId: String(userId),
+          transactionId: `mini_app_pending_${Date.now()}`,
+          productName: item.name,
+          itemId: String(itemId),
+          amount: item.price,
+          status: "PENDING",
+        },
+      });
+
+      return user;
     });
 
+    if (!result) {
+      console.log('Payment already processed, returning early');
+      return NextResponse.json({
+        success: true,
+        message: 'Payment already processed'
+      });
+    }
+
     console.log('Mini app payment - user balance updated:', {
-      userId: user.id,
-      telegramId: user.telegramId,
-      newBalance: user.balance,
+      userId: result.id,
+      telegramId: result.telegramId,
+      newBalance: result.balance,
       amount: item.price
     });
 
