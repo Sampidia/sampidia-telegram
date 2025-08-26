@@ -355,44 +355,15 @@ export default function Home() {
       // For Telegram Stars, open the invoice directly in the Mini App
       WebApp.openInvoice(invoiceLink, async (status) => {
         if (status === 'paid') {
-          // Payment was successful
-          console.log('Payment successful!');
+          // Payment was successful - webhook will handle balance update and payment record creation
+          console.log('Payment successful! Webhook will process balance update.');
 
-          try {
-            // Call our payment success API to update balance and create purchase record
-            const response = await fetch('/api/payment-success', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                userId: userTelegramId,
-                itemId: item.id,
-                transactionId: 'mini_app_pending' // Temporary ID until webhook provides real one
-              })
-            });
+          // Show success message
+          alert('✅ Payment successful! Your purchase has been completed.');
 
-            if (response.ok) {
-              const result = await response.json();
-              console.log('Payment success API response:', result);
-
-              // Show success message
-              alert('✅ Payment successful! Your purchase has been completed.');
-
-              // Refresh purchases to show the new purchase
-              await fetchPurchases();
-
-              // Update user balance after successful payment
-              await fetchUserBalance();
-            } else {
-              const error = await response.json();
-              console.error('Payment success API failed:', error);
-              alert('❌ Payment processed but balance update failed. Please contact support.');
-            }
-          } catch (error) {
-            console.error('Error calling payment success API:', error);
-            alert('❌ Payment processed but balance update failed. Please contact support.');
-          }
+          // Refresh purchases and balance to show the updates from webhook
+          await fetchPurchases();
+          await fetchUserBalance();
         } else if (status === 'failed') {
           alert('❌ Payment failed. Please try again.');
         } else if (status === 'cancelled') {

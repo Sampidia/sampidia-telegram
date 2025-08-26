@@ -113,8 +113,8 @@ bot.on("pre_checkout_query", (ctx) => {
   });
 });
 
-// Payment handling is done by the webhook route to prevent double processing
-// This bot file is for command-based interactions only
+// Bot commands only - payment success events are handled by the webhook route
+// since Telegram sends successful_payment events to the webhook URL, not back to the bot
 
 /*
   Handles the /balance command.
@@ -172,24 +172,11 @@ Contact our support team and we'll process your refund within 24-48 hours.`
   );
 });
 
-// Webhook only (NO bot.start())
-app.use("/webhook", webhookCallback(bot, "express"));
-
-app.get("/", (req, res) => res.send("SamPidia Bot running with webhook"));
+// Bot commands only - webhook handling is done by the webhook route
+app.get("/", (req, res) => res.send("SamPidia Bot running (commands only)"));
 
 app.listen(port, async () => {
-  console.log(`SamPidia Bot server running on port ${port}`);
+  console.log(`SamPidia Bot server running on port ${port} (commands only)`);
   console.log(`Bot token: ${process.env.BOT_TOKEN ? 'Set' : 'Using default'}`);
-  
-  // Only set webhook if WEBHOOK_URL is provided
-  if (process.env.WEBHOOK_URL) {
-    try {
-      await bot.api.setWebhook(process.env.WEBHOOK_URL);
-      console.log("Webhook set successfully to:", process.env.WEBHOOK_URL);
-    } catch (error) {
-      console.error("Error setting webhook:", error);
-    }
-  } else {
-    console.log("No WEBHOOK_URL provided, webhook not set");
-  }
+  console.log("Note: Webhook is handled by app/api/webhook/route.ts");
 });
