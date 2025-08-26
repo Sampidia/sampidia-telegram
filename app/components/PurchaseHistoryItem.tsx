@@ -20,54 +20,58 @@ export default function PurchaseHistoryItem({
     if (item?.name) {
       return item.name;
     }
-    
-    // If purchase has an itemid and it's a string, return it (corrected property name)
+
+    // If purchase has an itemId and it's a string, return it
     if (typeof purchase.itemId === 'string') {
       return purchase.itemId;
     }
-    
-    // Check for various possible transaction ID property names
-    if (typeof (purchase as any).transactionId === 'string') {
-      return (purchase as any).transactionId;
+
+    // Check for transaction ID as fallback
+    if (typeof purchase.transactionId === 'string') {
+      return purchase.transactionId;
     }
-    
-    if (typeof (purchase as any).transactionId === 'string') {
-      return (purchase as any).transactionId;
-    }
-    
-    if (typeof (purchase as any).id === 'string') {
-      return (purchase as any).id;
-    }
-    
+
     // Fallback
     return 'Unknown Item';
   };
 
   // Helper function to safely get transaction ID
   const getTransactionId = (): string => {
-    // Check for various possible transaction ID property names
-    if (typeof (purchase as any).transactionId === 'string') {
-      return (purchase as any).transactionId;
+    // Check for transaction ID
+    if (typeof purchase.transactionId === 'string') {
+      return purchase.transactionId;
     }
-    
-    if (typeof (purchase as any).transactionId === 'string') {
-      return (purchase as any).transactionId;
+
+    // Fallback to itemId if transactionId is not available
+    if (typeof purchase.itemId === 'string') {
+      return purchase.itemId;
     }
-    
-    if (typeof (purchase as any).id === 'string') {
-      return (purchase as any).id;
-    }
-    
+
     return '';
+  };
+
+  // Helper function to safely format the timestamp
+  const getFormattedDate = (): string => {
+    if (purchase.timestamp) {
+      const date = new Date(purchase.timestamp);
+      // Check if the date is valid
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      // If parsing fails, return the raw timestamp
+      return String(purchase.timestamp);
+    }
+
+    return 'Date not available';
   };
 
   return (
     <div className="flex items-center p-4 bg-white rounded-lg shadow-sm">
       <div className="text-2xl mr-3">{item?.icon || '🎁'}</div>
       <div className="flex-1">
-        <h3 className="font-medium">{item?.name}</h3>
+        <h3 className="font-medium">{getItemName()}</h3>
         <p className="text-xs tg-hint">
-          {String(purchase.timestamp)}
+          {getFormattedDate()}
         </p>
       </div>
       <div className="flex flex-col space-y-2">
