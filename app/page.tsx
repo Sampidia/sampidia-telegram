@@ -667,7 +667,7 @@ export default function Home() {
         
         {activeTab === 2 && (
           <>
-          <div className="w-full" style={{height:'calc(100vh - 160px)'}}>
+          <div className="w-full" style={{height:'100vh'}}>
             <iframe
               src="https://sampidia.com"
               title="Tab 2"
@@ -678,7 +678,7 @@ export default function Home() {
         )}
 
         {activeTab === 3 && (
-          <div className="w-full" style={{height:'calc(100vh - 160px)'}}>
+          <div className="w-full" style={{height:'100vh'}}>
             <iframe
               src="https://connect.sampidia.com"
               title="Tab 3"
@@ -688,7 +688,7 @@ export default function Home() {
         )}
 
         {activeTab === 4 && (
-          <div className="w-full" style={{height:'calc(100vh - 160px)'}}>
+          <div className="w-full" style={{height:'100vh'}}>
             <iframe
               src="https://ai.sampidia.com"
               title="Tab 4"
