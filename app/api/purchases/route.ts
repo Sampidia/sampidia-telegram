@@ -18,11 +18,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
+    // First, ensure user exists and get their ID
+    const user = await prisma.user.upsert({
+      where: { telegramId: String(userId) },
+      update: {
+        lastSeenAt: new Date()
+      },
+      create: {
+        telegramId: String(userId),
+        lastSeenAt: new Date()
+      }
+    });
+
     const payment = await prisma.payment.create({
       data: {
-        userId: String(userId),
+        userId: user.id,
         telegramId: String(userId),
-        transactionId: String(userId),
+        transactionId: `pending_${Date.now()}_${userId}`,
         productName: String(itemName),
         itemId: String(itemId),
         amount: 100,

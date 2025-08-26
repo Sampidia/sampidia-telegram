@@ -178,7 +178,7 @@ bot.on("message:successful_payment", async (ctx) => {
     // Store payment in database using the user's ID
     const savedPayment = await prisma.payment.create({
       data: {
-        userId: userId, // Add userId here
+        userId: user.id,
         telegramId: telegramId,
         transactionId: transactionId,
         productName: amount ? `${amount} Stars` : 'Stars',

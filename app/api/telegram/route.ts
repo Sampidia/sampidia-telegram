@@ -62,40 +62,57 @@ bot.on("message:successful_payment", async (ctx) => {
   try {
     const payment = ctx.message.successful_payment;
     const payload = JSON.parse(payment.invoice_payload || '{}');
-    
-    // Store payment in database
+    const telegramId = ctx.from.id.toString();
+    const amount = payment.total_amount || 0;
+
+    // First, ensure user exists and get their ID
+    const user = await prisma.user.upsert({
+      where: { telegramId: telegramId },
+      update: {
+        balance: { increment: amount },
+        lastSeenAt: new Date()
+      },
+      create: {
+        telegramId: telegramId,
+        firstName: ctx.from.first_name || '',
+        username: ctx.from.username || '',
+        balance: amount,
+        lastSeenAt: new Date()
+      }
+    });
+
+    console.log('User upsert result:', {
+      userId: user.id,
+      telegramId: user.telegramId,
+      newBalance: user.balance
+    });
+
+    // Store payment in database using the user's ID
     await prisma.payment.create({
       data: {
-        userId: ctx.from.id.toString(),
-        telegramId: ctx.from.id.toString(),
+        userId: user.id,
+        telegramId: telegramId,
         transactionId: payment.telegram_payment_charge_id,
-        productName: payment.total_amount ? `${payment.total_amount} Stars` : 'Stars',
+        productName: amount ? `${amount} Stars` : 'Stars',
         itemId: payload.itemId || 'unknown',
-        amount: payment.total_amount || 0,
+        amount: amount,
         status: "COMPLETED",
       },
     });
 
-    // Update user balance
-    await prisma.user.upsert({
-      where: { telegramId: ctx.from.id.toString() },
-      update: { 
-        balance: { increment: payment.total_amount || 0 },
-        lastSeenAt: new Date()
-      },
-      create: {
-        telegramId: ctx.from.id.toString(),
-        firstName: ctx.from.first_name || '',
-        username: ctx.from.username || '',
-        balance: payment.total_amount || 0,
-        lastSeenAt: new Date()
-      }
-    });
-    
+    console.log('Payment record created successfully');
+
     // Send confirmation message
-    await ctx.reply(`✅ Payment successful! You've purchased ${payment.total_amount} Stars. Your balance has been updated.`);
+    await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
   } catch (error) {
     console.error('Error processing payment:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      payment: ctx.message.successful_payment
+    });
+
+    // Send a more user-friendly error message
     await ctx.reply(`✅ Payment received! We're processing your purchase and will update your balance shortly.`);
   }
 });

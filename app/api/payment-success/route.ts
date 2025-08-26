@@ -26,32 +26,38 @@ export async function POST(req: NextRequest) {
       itemPrice: item.price
     });
 
-    // Use a transaction to ensure atomicity
-    await prisma.$transaction([
-      prisma.payment.create({
-        data: {
-          userId: String(userId),
-          telegramId: String(userId),
-          transactionId: String(transactionId),
-          productName: item.name,
-          itemId: String(itemId),
-          amount: item.price,
-          status: "COMPLETED",
-        },
-      }),
-      prisma.user.upsert({
-        where: { telegramId: String(userId) },
-        update: {
-          balance: { increment: item.price },
-          lastSeenAt: new Date()
-        },
-        create: {
-          telegramId: String(userId),
-          balance: item.price,
-          lastSeenAt: new Date()
-        }
-      }),
-    ]);
+    // First, ensure user exists and get their ID
+    const user = await prisma.user.upsert({
+      where: { telegramId: String(userId) },
+      update: {
+        balance: { increment: item.price },
+        lastSeenAt: new Date()
+      },
+      create: {
+        telegramId: String(userId),
+        balance: item.price,
+        lastSeenAt: new Date()
+      }
+    });
+
+    console.log('User upsert result:', {
+      userId: user.id,
+      telegramId: user.telegramId,
+      newBalance: user.balance
+    });
+
+    // Store payment in database using the user's ID
+    await prisma.payment.create({
+      data: {
+        userId: user.id,
+        telegramId: String(userId),
+        transactionId: String(transactionId),
+        productName: item.name,
+        itemId: String(itemId),
+        amount: item.price,
+        status: "COMPLETED",
+      },
+    });
 
     console.log('Payment success transaction completed successfully');
 
