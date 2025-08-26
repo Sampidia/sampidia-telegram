@@ -8,6 +8,8 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const telegramId = searchParams.get('telegramId');
 
+    console.log('Withdrawal history API called with telegramId:', telegramId);
+
     if (!telegramId) {
       return NextResponse.json({ message: "TelegramId is required" }, { status: 400 });
     }
@@ -18,27 +20,49 @@ export async function GET(req: Request) {
       select: { id: true }
     });
 
+    console.log('User found:', user ? 'Yes' : 'No', user?.id);
+
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // Fetch withdrawal history for the user
-    const withdrawals = await prisma.withdrawal.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        amount: true,
-        withdrawMethod: true,
-        bankName: true,
-        accountNumber: true,
-        accountName: true,
-        tonAddress: true,
-        status: true,
-        createdAt: true,
-        processedAt: true
-      }
-    });
+    // Fetch withdrawal history for the user using raw SQL as fallback
+    let withdrawals: any[] = [];
+
+    try {
+      // Try using Prisma client first
+      withdrawals = await prisma.withdrawal.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          amount: true,
+          withdrawMethod: true,
+          bankName: true,
+          accountNumber: true,
+          accountName: true,
+          tonAddress: true,
+          status: true,
+          createdAt: true,
+          processedAt: true
+        }
+      });
+      console.log('Found withdrawals using Prisma:', withdrawals.length);
+    } catch (prismaError) {
+      console.error('Prisma withdrawal query failed, trying raw SQL:', prismaError);
+
+      // Fallback to raw SQL
+      const withdrawalQuery = `
+        SELECT "id", "amount", "withdrawMethod", "bankName", "accountNumber", "accountName", "tonAddress", "status", "createdAt", "processedAt"
+        FROM "Withdrawal"
+        WHERE "userId" = $1
+        ORDER BY "createdAt" DESC
+      `;
+
+      const rawResults = await prisma.$queryRawUnsafe(withdrawalQuery, user.id) as any[];
+      withdrawals = rawResults;
+      console.log('Found withdrawals using raw SQL:', withdrawals.length);
+    }
 
     return NextResponse.json({
       success: true,

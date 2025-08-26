@@ -18,7 +18,13 @@ interface WithdrawalEmailParams {
 // Helper function for sending email
 async function sendWithdrawalEmail(params: WithdrawalEmailParams) {
   const { amount, bankName, accountNumber, accountName, userId, username, withdrawMethod, tonAddress } = params;
-  
+
+  console.log('🔄 Setting up email transporter...');
+  console.log('SMTP Host:', process.env.SMTP_HOST);
+  console.log('SMTP Port:', process.env.SMTP_PORT);
+  console.log('SMTP Secure:', process.env.SMTP_SECURE);
+  console.log('SMTP User:', process.env.SMTP_USER ? 'Set' : 'NOT SET');
+
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT),
@@ -29,7 +35,7 @@ async function sendWithdrawalEmail(params: WithdrawalEmailParams) {
     },
   });
 
-  const methodDetails = withdrawMethod === 'bank' 
+  const methodDetails = withdrawMethod === 'bank'
     ? `Bank: ${bankName}\nAccount: ${accountNumber} (${accountName})`
     : `TON Wallet: ${tonAddress}`;
 
@@ -40,11 +46,25 @@ async function sendWithdrawalEmail(params: WithdrawalEmailParams) {
     text: `Withdrawal Request\n\nMethod: ${withdrawMethod}\nAmount: ${amount}\n${methodDetails}\nUser ID: ${userId}\nUsername: ${username}`
   };
 
+  console.log('📧 Sending email with options:', {
+    from: mailOptions.from,
+    to: mailOptions.to,
+    subject: mailOptions.subject
+  });
+
   try {
-    await transporter.sendMail(mailOptions);
-    console.log('Withdrawal email sent successfully');
-  } catch (err) {
-    console.error('Failed to send withdrawal email:', err);
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Withdrawal email sent successfully:', result.messageId);
+    return result;
+  } catch (err: any) {
+    console.error('❌ Failed to send withdrawal email:', err);
+    console.error('Error details:', {
+      code: err?.code,
+      response: err?.response,
+      responseCode: err?.responseCode,
+      message: err?.message
+    });
+    throw err;
   }
 }
 
@@ -106,12 +126,11 @@ export async function POST(req: Request) {
 
     const newBalance = updatedUser.balance;
 
-    // For now, let's create a simple withdrawal record using raw SQL since the Prisma client might not be updated yet
-    // This is a temporary solution until the migration is properly applied
+    // Create withdrawal record using raw SQL (temporary fix)
     let withdrawalId = '';
 
     try {
-      // Create withdrawal record using raw SQL
+      // Create the withdrawal record using raw SQL
       const createWithdrawalQuery = `
         INSERT INTO "Withdrawal" ("id", "userId", "amount", "withdrawMethod", "bankName", "accountNumber", "accountName", "tonAddress", "status", "emailSent", "createdAt")
         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
@@ -120,7 +139,7 @@ export async function POST(req: Request) {
 
       const withdrawalResult = await prisma.$queryRawUnsafe(
         createWithdrawalQuery,
-        userId,
+        user.id,
         amount,
         withdrawMethod,
         withdrawMethod === 'bank' ? bankName : null,
@@ -132,9 +151,18 @@ export async function POST(req: Request) {
       ) as Array<{ id: string }>;
 
       withdrawalId = withdrawalResult[0]?.id || '';
+      console.log('Withdrawal record created with ID:', withdrawalId);
 
       // Send withdrawal email
       try {
+        console.log('Attempting to send withdrawal email to:', process.env.SMTP_USER);
+        console.log('SMTP Config:', {
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT,
+          secure: process.env.SMTP_SECURE,
+          user: process.env.SMTP_USER ? '***' : 'NOT SET'
+        });
+
         await sendWithdrawalEmail({
           amount,
           bankName,
@@ -151,8 +179,14 @@ export async function POST(req: Request) {
           'UPDATE "Withdrawal" SET "emailSent" = true WHERE "id" = $1',
           withdrawalId
         );
+
+        console.log('✅ Withdrawal email sent successfully for withdrawal:', withdrawalId);
       } catch (emailError) {
-        console.error('Failed to send withdrawal email:', emailError);
+        console.error('❌ Failed to send withdrawal email:', emailError);
+        console.error('Email error details:', {
+          message: emailError instanceof Error ? emailError.message : 'Unknown error',
+          stack: emailError instanceof Error ? emailError.stack : undefined
+        });
         // Don't fail the withdrawal if email fails, but log it
       }
 
@@ -177,6 +211,8 @@ export async function POST(req: Request) {
         'COMPLETED',
         withdrawalId
       );
+
+      console.log('Withdrawal completed successfully:', withdrawalId);
 
       return NextResponse.json({
         success: true,
