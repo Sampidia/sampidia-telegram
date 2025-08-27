@@ -53,8 +53,80 @@ bot.on("pre_checkout_query", (ctx) => {
   });
 });
 
-// Payment handling is done by the webhook route to prevent double processing
-// This telegram route is for API-based interactions only
+// Successful payment handler for telegram API
+bot.on("message:successful_payment", async (ctx) => {
+  if (!ctx.message || !ctx.message.successful_payment || !ctx.from) {
+    return;
+  }
+
+  try {
+    const payment = ctx.message.successful_payment;
+    const payload = JSON.parse(payment.invoice_payload || '{}');
+    const telegramId = ctx.from.id.toString();
+    const amount = payment.total_amount || 0;
+
+    // Check if payment already exists to prevent double processing
+    const existingPayment = await prisma.payment.findUnique({
+      where: { transactionId: payment.telegram_payment_charge_id }
+    });
+
+    if (existingPayment) {
+      console.log('Payment already processed, skipping telegram API processing');
+      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+      return;
+    }
+
+    // First, ensure user exists and get their ID
+    const user = await prisma.user.upsert({
+      where: { telegramId: telegramId },
+      update: {
+        balance: { increment: amount },
+        lastSeenAt: new Date()
+      },
+      create: {
+        telegramId: telegramId,
+        firstName: ctx.from.first_name || '',
+        username: ctx.from.username || '',
+        balance: amount,
+        lastSeenAt: new Date()
+      }
+    });
+
+    console.log('User upsert result:', {
+      userId: user.id,
+      telegramId: user.telegramId,
+      newBalance: user.balance
+    });
+
+    // Store payment in database using the user's ID
+    await prisma.payment.create({
+      data: {
+        userId: user.id,
+        telegramId: telegramId,
+        transactionId: payment.telegram_payment_charge_id,
+        productName: amount ? `${amount} Stars` : 'Stars',
+        itemId: payload.itemId || 'unknown',
+        amount: amount,
+        status: "COMPLETED",
+      },
+    });
+
+    console.log('Payment record created successfully');
+
+    // Send confirmation message to the user
+    await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      payment: ctx.message.successful_payment
+    });
+
+    // Send a more user-friendly error message
+    await ctx.reply(`✅ Payment received! We're processing your purchase and will update your balance shortly.`);
+  }
+});
 
 /*
   Handles the /balance command.

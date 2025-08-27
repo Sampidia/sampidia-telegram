@@ -113,8 +113,105 @@ bot.on("pre_checkout_query", (ctx) => {
   });
 });
 
-// Bot commands only - payment success events are handled by the webhook route
-// since Telegram sends successful_payment events to the webhook URL, not back to the bot
+// Successful payment handler for bot commands
+bot.on("message:successful_payment", async (ctx) => {
+  if (!ctx.message || !ctx.message.successful_payment || !ctx.from) {
+    console.log('Missing payment data:', { message: !!ctx.message, payment: !!ctx.message?.successful_payment, from: !!ctx.from });
+    return;
+  }
+
+  try {
+    const payment = ctx.message.successful_payment;
+    console.log('Processing bot payment:', payment);
+
+    const payload = JSON.parse(payment.invoice_payload || '{}');
+    console.log('Bot payment payload:', payload);
+
+    // Validate required fields
+    const userId = payload.userId || ctx.from.id.toString();
+    const telegramId = ctx.from.id.toString();
+    const transactionId = payment.telegram_payment_charge_id;
+    const amount = payment.total_amount || 0;
+    const itemId = payload.itemId || 'unknown';
+
+    console.log('Bot payment data:', {
+      userId,
+      telegramId,
+      transactionId,
+      amount,
+      itemId
+    });
+
+    // Check if payment already exists to prevent double processing
+    const existingPayment = await prisma.payment.findUnique({
+      where: { transactionId: transactionId }
+    });
+
+    if (existingPayment) {
+      console.log('Payment already processed, skipping bot processing');
+      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+      return;
+    }
+
+    // Check if user exists
+    let user = await prisma.user.findUnique({
+      where: { telegramId: telegramId },
+    });
+
+    if (user) {
+      // If user exists, update their balance
+      user = await prisma.user.update({
+        where: { telegramId: telegramId },
+        data: {
+          balance: { increment: amount },
+          lastSeenAt: new Date(),
+        },
+      });
+      console.log('User balance updated by bot:', user);
+    } else {
+      // If user does not exist, create a new user
+      user = await prisma.user.create({
+        data: {
+          telegramId: telegramId,
+          firstName: ctx.from.first_name || '',
+          username: ctx.from.username || '',
+          balance: amount,
+          lastSeenAt: new Date(),
+        },
+      });
+      console.log('New user created by bot:', user);
+    }
+
+    // Store payment in database using the user's ID
+    const savedPayment = await prisma.payment.create({
+      data: {
+        userId: user.id,
+        telegramId: telegramId,
+        transactionId: transactionId,
+        productName: amount ? `${amount} Stars` : 'Stars',
+        itemId: itemId,
+        amount: amount,
+        status: "COMPLETED",
+      },
+    });
+
+    console.log('Bot payment saved to database:', savedPayment);
+    console.log('Bot payment processed successfully:', payment);
+
+    // Send confirmation message to the user
+    await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+  } catch (error) {
+    console.error('Error processing payment from bot:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown error type'
+    });
+
+    // Send a more user-friendly error message
+    await ctx.reply(`✅ Payment received! We're processing your purchase and will update your balance shortly.`);
+  }
+});
 
 /*
   Handles the /balance command.
