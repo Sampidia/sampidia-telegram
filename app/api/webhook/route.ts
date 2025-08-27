@@ -15,7 +15,15 @@ bot.on("pre_checkout_query", (ctx) => {
 
 // Handle successful payments
 bot.on("message:successful_payment", async (ctx) => {
+  console.log('=== WEBHOOK EVENT RECEIVED ===');
+  console.log('Full context:', JSON.stringify(ctx, null, 2));
+
   if (!ctx.message || !ctx.message.successful_payment || !ctx.from) {
+    console.log('Missing required fields:', {
+      hasMessage: !!ctx.message,
+      hasPayment: !!(ctx.message?.successful_payment),
+      hasFrom: !!ctx.from
+    });
     return;
   }
 
@@ -36,7 +44,8 @@ bot.on("message:successful_payment", async (ctx) => {
       transactionId,
       amount,
       itemId,
-      payload
+      payload,
+      paymentDetails: payment
     });
 
     // Check if payment already exists to prevent double processing
@@ -105,8 +114,12 @@ const handler = webhookCallback(bot, "next-js");
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('=== WEBHOOK REQUEST RECEIVED ===');
     const body = await req.json();
+    console.log('Request body:', JSON.stringify(body, null, 2));
+
     const headers = Object.fromEntries(req.headers.entries());
+    console.log('Request headers:', headers);
 
     let responseStatus = 200;
     let responseBody: any = {};
@@ -119,6 +132,10 @@ export async function POST(req: NextRequest) {
     };
 
     await handler({ body, headers }, mockRes as any);
+
+    console.log('=== WEBHOOK RESPONSE ===');
+    console.log('Status:', responseStatus);
+    console.log('Body:', responseBody);
 
     return NextResponse.json(responseBody, { status: responseStatus });
   } catch (error) {
