@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from '@prisma/client'
+import prisma from '@/lib/prisma'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// Global Prisma client instance
-const prisma = new PrismaClient({
-  log: ['error'],
-})
 
 export async function GET(req: NextRequest) {
   const startTime = Date.now();
@@ -64,8 +60,3 @@ export async function GET(req: NextRequest) {
     }, { status: 500 });
   }
 }
-
-// Cleanup function for graceful shutdown
-process.on('beforeExit', async () => {
-  await prisma.$disconnect()
-})

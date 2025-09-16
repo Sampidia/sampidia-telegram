@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import 'dotenv/config';
-
-const prisma = new PrismaClient();
 
 interface WithdrawalEmailParams {
   amount: number;
@@ -136,31 +134,26 @@ export async function POST(req: Request) {
 
     const newBalance = updatedUser.balance;
 
-    // Create withdrawal record using raw SQL (temporary fix)
+    // Create withdrawal record using Prisma
+    let withdrawal;
     let withdrawalId = '';
 
     try {
-      // Create the withdrawal record using raw SQL
-      const createWithdrawalQuery = `
-        INSERT INTO "Withdrawal" ("id", "userId", "amount", "withdrawMethod", "bankName", "accountNumber", "accountName", "tonAddress", "status", "emailSent", "createdAt")
-        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
-        RETURNING "id"
-      `;
+      withdrawal = await prisma.withdrawal.create({
+        data: {
+          userId: user.id,
+          amount,
+          withdrawMethod,
+          bankName: withdrawMethod === 'bank' ? bankName : null,
+          accountNumber: withdrawMethod === 'bank' ? accountNumber : null,
+          accountName: withdrawMethod === 'bank' ? accountName : null,
+          tonAddress: withdrawMethod === 'ton' ? tonAddress : null,
+          status: 'PENDING',
+          emailSent: false
+        }
+      });
 
-      const withdrawalResult = await prisma.$queryRawUnsafe(
-        createWithdrawalQuery,
-        user.id,
-        amount,
-        withdrawMethod,
-        withdrawMethod === 'bank' ? bankName : null,
-        withdrawMethod === 'bank' ? accountNumber : null,
-        withdrawMethod === 'bank' ? accountName : null,
-        withdrawMethod === 'ton' ? tonAddress : null,
-        'PENDING',
-        false
-      ) as Array<{ id: string }>;
-
-      withdrawalId = withdrawalResult[0]?.id || '';
+      withdrawalId = withdrawal.id;
       console.log('Withdrawal record created with ID:', withdrawalId);
 
       // Send withdrawal email
@@ -185,10 +178,10 @@ export async function POST(req: Request) {
         });
 
         // Update withdrawal record to mark email as sent
-        await prisma.$queryRawUnsafe(
-          'UPDATE "Withdrawal" SET "emailSent" = true WHERE "id" = $1',
-          withdrawalId
-        );
+        await prisma.withdrawal.update({
+          where: { id: withdrawalId },
+          data: { emailSent: true }
+        });
 
         console.log('✅ Withdrawal email sent successfully for withdrawal:', withdrawalId);
       } catch (emailError) {
@@ -230,11 +223,10 @@ export async function POST(req: Request) {
       // If transaction failed, try to mark withdrawal as failed
       if (withdrawalId) {
         try {
-          await prisma.$queryRawUnsafe(
-            'UPDATE "Withdrawal" SET "status" = $1 WHERE "id" = $2',
-            'FAILED',
-            withdrawalId
-          );
+          await prisma.withdrawal.update({
+            where: { id: withdrawalId },
+            data: { status: 'FAILED' }
+          });
         } catch (updateError) {
           console.error('Failed to update withdrawal status:', updateError);
         }

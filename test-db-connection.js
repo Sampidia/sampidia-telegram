@@ -47,7 +47,8 @@ async function testDatabaseConnection() {
     
     // Test basic connection
     console.log('\n🔌 Testing Database Connection...');
-    await prisma.$queryRaw`SELECT 1 as test`;
+    // For MongoDB, test connection by counting users (this works with both SQL and NoSQL)
+    await prisma.user.count();
     console.log('✅ Database connection successful');
     
     // Check if users table exists and has data

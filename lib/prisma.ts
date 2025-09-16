@@ -4,8 +4,8 @@ import { PrismaClient } from '@prisma/client'
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
 function createPrismaClient() {
-  // Use POSTGRES_URL if available, otherwise fall back to DATABASE_URL
-  const datasourceUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL
+  // Use DATABASE_URL first, otherwise fall back to PRISMA_DATABASE_URL
+  const datasourceUrl = process.env.DATABASE_URL || process.env.PRISMA_DATABASE_URL
   
   console.log('Creating Prisma client with URL:', datasourceUrl ? 'URL provided' : 'No URL found')
   
