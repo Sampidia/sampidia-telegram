@@ -204,7 +204,7 @@ This bot demonstrates:
 ### Option 1: Using PyCharm
 1. Open PyCharm
 2. Go to `File > Project from Version Control`
-3. Enter URL: `https://github.com'
+3. Enter URL: `https://github.com/username'
 4. Choose your project directory
 5. Click "Clone"
 6. Install dependencies:

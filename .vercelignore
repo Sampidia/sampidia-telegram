@@ -1,0 +1,10 @@
+.vercel
+.env.local
+.env.development
+.git
+.github
+node_modules
+prisma/migrations
+*.log
+.DS_Store
+.vercelignore
