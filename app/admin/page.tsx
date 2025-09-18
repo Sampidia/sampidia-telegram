@@ -258,13 +258,13 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-300">Total Withdrawals</h3>
-              <span className="text-2xl">💰</span>
+              <h3 className="text-lg font-semibold text-gray-300">Total Stars</h3>
+              <span className="text-2xl">⭐</span>
             </div>
             <div className="text-3xl font-bold text-yellow-400 mb-2">
-              ₦{stats.total.toLocaleString()}
+              {stats.total.toLocaleString()} ⭐
             </div>
-            <p className="text-gray-400 text-sm">All time withdrawals</p>
+            <p className="text-gray-400 text-sm">${(stats.total * 0.09).toFixed(2)} USD</p>
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -273,9 +273,9 @@ export default function AdminDashboard() {
               <span className="text-2xl">⏰</span>
             </div>
             <div className="text-3xl font-bold text-green-400 mb-2">
-              ₦{stats.last24Hours.toLocaleString()}
+              {stats.last24Hours.toLocaleString()} ⭐
             </div>
-            <p className="text-gray-400 text-sm">Past 24 hours</p>
+            <p className="text-gray-400 text-sm">${(stats.last24Hours * 0.09).toFixed(2)} USD</p>
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -284,9 +284,9 @@ export default function AdminDashboard() {
               <span className="text-2xl">📅</span>
             </div>
             <div className="text-3xl font-bold text-blue-400 mb-2">
-              ₦{stats.thisMonth.toLocaleString()}
+              {stats.thisMonth.toLocaleString()} ⭐
             </div>
-            <p className="text-gray-400 text-sm">Current month</p>
+            <p className="text-gray-400 text-sm">${(stats.thisMonth * 0.09).toFixed(2)} USD</p>
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -295,9 +295,64 @@ export default function AdminDashboard() {
               <span className="text-2xl">📊</span>
             </div>
             <div className="text-3xl font-bold text-purple-400 mb-2">
-              ₦{stats.last3Months.toLocaleString()}
+              {stats.last3Months.toLocaleString()} ⭐
             </div>
-            <p className="text-gray-400 text-sm">Quarterly total</p>
+            <p className="text-gray-400 text-sm">${(stats.last3Months * 0.09).toFixed(2)} USD</p>
+          </div>
+        </div>
+
+        {/* Profits Analytics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gray-800 rounded-lg p-6 border border-green-500">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-300">Total Profits</h3>
+              <span className="text-2xl">💰</span>
+            </div>
+            <div className="text-3xl font-bold text-green-400 mb-2">
+              ${(stats.total * 0.004).toFixed(2)}
+            </div>
+            <p className="text-gray-400 text-sm">
+              {stats.total.toLocaleString()} ⭐ × 0.4%
+            </p>
+          </div>
+
+          <div className="bg-gray-800 rounded-lg p-6 border border-green-500">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-300">24H Profits</h3>
+              <span className="text-2xl">⏰</span>
+            </div>
+            <div className="text-3xl font-bold text-green-400 mb-2">
+              ${(stats.last24Hours * 0.004).toFixed(2)}
+            </div>
+            <p className="text-gray-400 text-sm">
+              {stats.last24Hours.toLocaleString()} ⭐ × 0.4%
+            </p>
+          </div>
+
+          <div className="bg-gray-800 rounded-lg p-6 border border-green-500">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-300">Monthly Profits</h3>
+              <span className="text-2xl">📅</span>
+            </div>
+            <div className="text-3xl font-bold text-green-400 mb-2">
+              ${(stats.thisMonth * 0.004).toFixed(2)}
+            </div>
+            <p className="text-gray-400 text-sm">
+              {stats.thisMonth.toLocaleString()} ⭐ × 0.4%
+            </p>
+          </div>
+
+          <div className="bg-gray-800 rounded-lg p-6 border border-green-500">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-300">3M Profits</h3>
+              <span className="text-2xl">📊</span>
+            </div>
+            <div className="text-3xl font-bold text-green-400 mb-2">
+              ${(stats.last3Months * 0.004).toFixed(2)}
+            </div>
+            <p className="text-gray-400 text-sm">
+              {stats.last3Months.toLocaleString()} ⭐ × 0.4%
+            </p>
           </div>
         </div>
 
@@ -350,7 +405,7 @@ export default function AdminDashboard() {
                       <span className="font-mono">...{withdrawal.userId.slice(-6)}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-yellow-400">
-                      ₦{withdrawal.amount.toLocaleString()}
+                      {withdrawal.amount.toLocaleString()} ⭐
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
@@ -425,11 +480,19 @@ export default function AdminDashboard() {
                 </span>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-gray-300">Amount:</span>
-                <span className="text-yellow-400 font-bold">
-                  ₦{selectedWithdrawal.amount.toLocaleString()}
-                </span>
+              <div>
+                <div className="flex justify-between">
+                  <span className="text-gray-300">Amount:</span>
+                  <span className="text-yellow-400 font-bold">
+                    {selectedWithdrawal.amount.toLocaleString()} ⭐
+                  </span>
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-gray-400 text-sm">USD Value:</span>
+                  <span className="text-yellow-300 text-sm">
+                    ${(selectedWithdrawal.amount * 0.09).toFixed(2)}
+                  </span>
+                </div>
               </div>
 
               <div className="flex justify-between">
