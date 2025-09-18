@@ -1,12 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from '@prisma/client';
+import { authenticateAdmin } from '../middleware';
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Authenticate admin
+  const authError = await authenticateAdmin(request);
+  if (authError) return authError;
+
   try {
-    // For now, we'll allow the call if it reaches here
-    // In production, you'd want to verify the admin token/jwt
 
     const now = new Date();
 

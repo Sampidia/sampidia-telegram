@@ -78,7 +78,13 @@ export default function AdminDashboard() {
             setUserTelegramId(currentUserTelegramId);
 
             // Check against NEXT_ADMIN env variable
-            const adminTelegramId = process.env.NEXT_PUBLIC_NEXT_ADMIN || '1666422806';
+            const adminTelegramId = process.env.NEXT_PUBLIC_NEXT_ADMIN;
+
+            if (!adminTelegramId) {
+              console.error('Admin Auth - NEXT_PUBLIC_NEXT_ADMIN environment variable is not set!');
+              setAccessDenied(true);
+              return;
+            }
 
             console.log('Admin Auth - Access check:', {
               userId: currentUserTelegramId,
@@ -119,17 +125,37 @@ export default function AdminDashboard() {
     setDataLoading(true);
     try {
       // Load analytics stats
-      const statsResponse = await fetch('/api/admin/analytics');
+      const statsResponse = await fetch('/api/admin/analytics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          telegramId: userTelegramId,
+        }),
+      });
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         setStats(statsData);
+      } else {
+        console.error('Analytics API error:', await statsResponse.text());
       }
 
       // Load withdrawals
-      const withdrawalsResponse = await fetch('/api/admin/withdrawals');
+      const withdrawalsResponse = await fetch('/api/admin/withdrawals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          telegramId: userTelegramId,
+        }),
+      });
       if (withdrawalsResponse.ok) {
         const withdrawalsData = await withdrawalsResponse.json();
         setWithdrawals(withdrawalsData.withdrawals || []);
+      } else {
+        console.error('Withdrawals API error:', await withdrawalsResponse.text());
       }
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -155,6 +181,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           withdrawalId,
           status,
+          telegramId: userTelegramId,
         }),
       });
 
@@ -167,7 +194,7 @@ export default function AdminDashboard() {
         const errorData = await response.json();
         alert(`Error: ${errorData.error}`);
       }
-    } catch (error) {
+    } catch {
       alert('Failed to update withdrawal status');
     }
   };
