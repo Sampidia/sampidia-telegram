@@ -104,15 +104,7 @@ export default function AdminDashboard() {
     setDataLoading(true);
     try {
       // Load analytics stats
-      const statsResponse = await fetch('/api/admin/analytics', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          telegramId: process.env.NEXT_PUBLIC_NEXT_ADMIN,
-        }),
-      });
+      const statsResponse = await fetch('/api/admin/analytics');
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         setStats(statsData);
@@ -121,15 +113,7 @@ export default function AdminDashboard() {
       }
 
       // Load withdrawals
-      const withdrawalsResponse = await fetch('/api/admin/withdrawals', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          telegramId: process.env.NEXT_PUBLIC_NEXT_ADMIN,
-        }),
-      });
+      const withdrawalsResponse = await fetch('/api/admin/withdrawals');
       if (withdrawalsResponse.ok) {
         const withdrawalsData = await withdrawalsResponse.json();
         setWithdrawals(withdrawalsData.withdrawals || []);
