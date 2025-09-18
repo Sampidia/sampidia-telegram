@@ -26,13 +26,13 @@ interface Withdrawal {
 
 export default function AdminDashboard() {
   // Authentication state
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [accessDenied, setAccessDenied] = useState(false);
-  const [userTelegramId, setUserTelegramId] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  // Dashboard data state
+  // Dashboard state
   const [stats, setStats] = useState<WithdrawalStats>({
     total: 0,
     last24Hours: 0,
@@ -44,81 +44,60 @@ export default function AdminDashboard() {
   const [showModal, setShowModal] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
 
-  // Authentication logic based on existing pattern
+  // Check authentication on page load
   useEffect(() => {
-    const initAdminCheck = async () => {
-      setLoading(true);
-
-      try {
-        // Use exact same authentication pattern as main app
-        const WebApp = (await import('@twa-dev/sdk')).default;
-
-        // Check if running within Telegram
-        const isTelegram = WebApp.isExpanded !== undefined;
-
-        console.log('Admin Auth - Telegram detection:', { isTelegram });
-
-        if (isTelegram) {
-          // Initialize Telegram Web App
-          WebApp.ready();
-          WebApp.expand();
-
-          console.log('Admin Auth - WebApp initDataUnsafe:', WebApp.initDataUnsafe);
-
-          // Get user data from WebApp
-          if (WebApp.initDataUnsafe && WebApp.initDataUnsafe.user) {
-            const user = WebApp.initDataUnsafe.user;
-            const currentUserTelegramId = user.id?.toString() || '';
-
-            console.log('Admin Auth - Real Telegram user found:', {
-              userId: currentUserTelegramId,
-              firstName: user.first_name
-            });
-
-            setUserTelegramId(currentUserTelegramId);
-
-            // Check against NEXT_ADMIN env variable
-            const adminTelegramId = process.env.NEXT_PUBLIC_NEXT_ADMIN;
-
-            if (!adminTelegramId) {
-              console.error('Admin Auth - NEXT_PUBLIC_NEXT_ADMIN environment variable is not set!');
-              setAccessDenied(true);
-              return;
-            }
-
-            console.log('Admin Auth - Access check:', {
-              userId: currentUserTelegramId,
-              adminId: adminTelegramId,
-              hasAccess: currentUserTelegramId === adminTelegramId
-            });
-
-            if (currentUserTelegramId === adminTelegramId) {
-              setIsAdmin(true);
-
-              // Load admin data
-              await loadAdminData();
-            } else {
-              setAccessDenied(true);
-            }
-          } else {
-            console.log('Admin Auth - No user data from Telegram');
-            setAccessDenied(true);
-          }
-        } else {
-          console.log('Admin Auth - Not running in Telegram');
-          setAccessDenied(true);
-        }
-      } catch (e) {
-        console.error('Admin Auth - Failed to initialize Telegram Web App:', e);
-        setAccessDenied(true);
-      } finally {
-        setIsInitialized(true);
-        setLoading(false);
-      }
-    };
-
-    initAdminCheck();
+    // Check if user is already authenticated in localStorage
+    const isAuth = localStorage.getItem('admin_auth') === 'true';
+    if (isAuth) {
+      setIsAuthenticated(true);
+      loadAdminData();
+    } else {
+      setShowLoginForm(true);
+    }
+    setIsLoading(false);
   }, []);
+
+  // Handle password authentication
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Get password from environment variable
+    const adminPassword = process.env.NEXT_PUBLIC_NEXT_ADMIN;
+
+    if (!adminPassword) {
+      setError('Admin password not configured. Please check environment variables.');
+      return;
+    }
+
+    if (password === adminPassword) {
+      // Authentication successful
+      setIsAuthenticated(true);
+      setShowLoginForm(false);
+      setPassword('');
+      setError('');
+      localStorage.setItem('admin_auth', 'true');
+
+      // Load admin data
+      loadAdminData();
+    } else {
+      setError('Incorrect password. Please try again.');
+    }
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setShowLoginForm(true);
+    localStorage.removeItem('admin_auth');
+    setPassword('');
+    setError('');
+  };
+
+  // Handle password input change
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    setError('');
+  };
 
   // Load admin dashboard data
   const loadAdminData = async () => {
@@ -131,7 +110,7 @@ export default function AdminDashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          telegramId: userTelegramId,
+          telegramId: process.env.NEXT_PUBLIC_NEXT_ADMIN,
         }),
       });
       if (statsResponse.ok) {
@@ -148,7 +127,7 @@ export default function AdminDashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          telegramId: userTelegramId,
+          telegramId: process.env.NEXT_PUBLIC_NEXT_ADMIN,
         }),
       });
       if (withdrawalsResponse.ok) {
@@ -181,7 +160,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           withdrawalId,
           status,
-          telegramId: userTelegramId,
+          telegramId: process.env.NEXT_PUBLIC_NEXT_ADMIN,
         }),
       });
 
@@ -200,58 +179,68 @@ export default function AdminDashboard() {
   };
 
   // Loading state
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold mb-2">Verifying Admin Access...</h2>
-          <p className="text-gray-400">Checking Telegram authentication</p>
+          <h2 className="text-xl font-semibold mb-2">Loading Admin Panel...</h2>
+          <p className="text-gray-400">Checking authentication</p>
         </div>
       </div>
     );
   }
 
-  // Access denied state
-  if (accessDenied) {
+  // Password login form
+  if (showLoginForm) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center text-white max-w-md mx-auto px-6">
-          <div className="text-6xl mb-6">🚫</div>
-          <h1 className="text-3xl font-bold mb-4 text-red-400">Access Restricted</h1>
-          <p className="text-lg text-gray-300 mb-2">
-            This admin panel requires administrator privileges.
-          </p>
-          <p className="text-sm text-gray-400 mb-6">
-            Current User ID: <span className="font-mono">{userTelegramId || 'Unknown'}</span>
-          </p>
-          <button
-            onClick={() => window.history.back()}
-            className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-          >
-            Return to App
-          </button>
-        </div>
-      </div>
-    );
-  }
+        <div className="bg-gray-800 rounded-lg p-8 w-full max-w-md mx-4 border border-gray-700">
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-4">🔐</div>
+            <h1 className="text-3xl font-bold text-yellow-400 mb-2">Admin Access</h1>
+            <p className="text-gray-300">Enter the admin password to continue</p>
+          </div>
 
-  // Not in Telegram state
-  if (!isInitialized && !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center text-white max-w-md mx-auto px-6">
-          <div className="text-6xl mb-6">⚠️</div>
-          <h1 className="text-3xl font-bold mb-4 text-yellow-400">Telegram Required</h1>
-          <p className="text-lg text-gray-300 mb-6">
-            The admin panel must be accessed through Telegram.
-          </p>
-          <button
-            onClick={() => window.location.href = '/'}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-          >
-            Go to Main App
-          </button>
+          <form onSubmit={handlePasswordSubmit}>
+            <div className="mb-6">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                Admin Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={handlePasswordChange}
+                placeholder="Enter admin password..."
+                className="w-full px-4 py-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                required
+                autoFocus
+              />
+            </div>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-600 border border-red-500 rounded-lg">
+                <p className="text-red-100 text-sm text-center">{error}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+            >
+              Access Admin Panel
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => window.location.href = '/'}
+              className="text-gray-400 hover:text-gray-300 text-sm transition-colors"
+            >
+              ← Back to Main App
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -262,13 +251,21 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gray-900 text-white pb-20">
       {/* Header */}
       <div className="bg-gray-800 p-6 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-yellow-400 mb-2">
-            🏆 Admin Dashboard
-          </h1>
-          <p className="text-gray-300">
-            Withdrawal Analytics & Management
-          </p>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-yellow-400 mb-2">
+              🏆 Admin Dashboard
+            </h1>
+            <p className="text-gray-300">
+              Withdrawal Analytics & Management
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+          >
+            Logout
+          </button>
         </div>
       </div>
 
