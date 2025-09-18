@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { authenticateAdmin } from '../middleware';
-
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   // Authenticate admin
@@ -46,8 +44,6 @@ export async function GET(request: NextRequest) {
       { error: 'Failed to fetch withdrawals' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -95,7 +91,5 @@ export async function PATCH(req: NextRequest) {
       { error: 'Failed to update withdrawal status' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
