@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from '@/lib/prisma';
-import { authenticateAdmin } from '../middleware';
 
-export async function GET(request: NextRequest) {
-  // Authenticate admin
-  const authError = await authenticateAdmin(request);
-  if (authError) return authError;
-
+export async function GET() {
   try {
 
     // Get withdrawals with user relations
@@ -49,10 +44,6 @@ export async function GET(request: NextRequest) {
 
 // Update withdrawal status
 export async function PATCH(req: NextRequest) {
-  // Authenticate admin
-  const authError = await authenticateAdmin(req);
-  if (authError) return authError;
-
   try {
     const { withdrawalId, status } = await req.json();
 

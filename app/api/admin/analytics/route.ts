@@ -1,12 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from '@/lib/prisma';
-import { authenticateAdmin } from '../middleware';
 
-export async function GET(request: NextRequest) {
-  // Authenticate admin
-  const authError = await authenticateAdmin(request);
-  if (authError) return authError;
-
+export async function GET() {
   try {
 
     const now = new Date();
