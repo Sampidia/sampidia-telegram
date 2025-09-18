@@ -134,7 +134,7 @@ export default function AdminDashboard() {
   };
 
   // Handle status update (Approve/Reject)
-  const handleStatusUpdate = async (withdrawalId: string, status: 'COMPLETED' | 'FAILED') => {
+  const handleStatusUpdate = async (withdrawalId: string, status: 'PENDING' | 'COMPLETED' | 'FAILED') => {
     try {
       const response = await fetch('/api/admin/withdrawals', {
         method: 'PATCH',
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
-        alert(`Withdrawal ${status === 'COMPLETED' ? 'approved' : 'rejected'} successfully!`);
+        alert(`Withdrawal ${status === 'COMPLETED' ? 'approved' : status === 'PENDING' ? 'set to pending' : 'rejected'} successfully!`);
         // Refresh the data
         await loadAdminData();
         setShowModal(false);
@@ -386,10 +386,10 @@ export default function AdminDashboard() {
                         ✅ Approve
                       </button>
                       <button
-                        onClick={() => handleStatusUpdate(withdrawal.id, 'FAILED')}
-                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
+                        onClick={() => handleStatusUpdate(withdrawal.id, 'PENDING')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"
                       >
-                        ❌ Reject
+                        🔄 Pend
                       </button>
                     </td>
                   </tr>
@@ -481,10 +481,10 @@ export default function AdminDashboard() {
                   ✅ Approve
                 </button>
                 <button
-                  onClick={() => handleStatusUpdate(selectedWithdrawal.id, 'FAILED')}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors"
+                  onClick={() => handleStatusUpdate(selectedWithdrawal.id, 'PENDING')}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors"
                 >
-                  ❌ Reject
+                  🔄 Set to Pending
                 </button>
               </div>
             </div>
