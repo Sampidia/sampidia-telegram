@@ -443,11 +443,10 @@ export default function Home() {
     const value = e.target.value;
     setCustomAmount(value);
 
-    // Calculate price dynamically using the same rate as existing items (~$0.009 per star)
+    // Calculate price as exact amount (1:1 stars) - no decimals
     const amount = parseInt(value) || 0;
     if (amount >= 1 && amount <= 30000) {
-      const price = Math.round(amount * 0.009 * 100); // Convert to cents for Telegram Stars pricing
-      setCustomPrice(price);
+      setCustomPrice(amount); // Exact stars to charge/pay
 
       // Clear approval code if amount drops below 10,000
       if (amount <= 10000) {
@@ -774,7 +773,7 @@ export default function Home() {
                   {customAmount && parseInt(customAmount) > 0 && (
                     <div className="mt-2 p-3 bg-gray-800 rounded-lg">
                       <p className="text-yellow-400 text-center font-semibold">
-                        ${(customPrice / 100).toFixed(2)} USD for {Number(customAmount).toLocaleString()} stars
+                        ${(parseInt(customAmount) * 0.009).toFixed(3)} USD for {Number(customAmount).toLocaleString()} stars
                       </p>
                       <p className="text-gray-400 text-center text-sm mt-1">
                         Rate: ${(0.009).toFixed(4)} per star
