@@ -12,6 +12,7 @@ import PurchaseHistory from '@/app/components/PurchaseHistory';
 import WithdrawalHistory from '@/app/components/WithdrawalHistory';
 import PurchaseSuccessModal from '@/app/components/PurchaseSuccessModal';
 import WithdrawalInstructionsModal from '@/app/components/WithdrawalInstructionsModal';
+import GoogleReviews from '@/app/components/TrustpilotReviews';
 
 export default function Home() {
   const [initialized, setInitialized] = useState(true); // Force initialized to true
@@ -34,6 +35,12 @@ export default function Home() {
   }>({ type: null });
 
   const [activeTab, setActiveTab] = useState(1); // New state for active tab
+
+  // State for custom purchase
+  const [customAmount, setCustomAmount] = useState<string>('');
+  const [customPrice, setCustomPrice] = useState<number>(0);
+  const [approvalCode, setApprovalCode] = useState<string>('');
+  const [isApprovalCodeValid, setIsApprovalCodeValid] = useState<boolean>(false);
 
   // State for withdrawal modal
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -431,6 +438,97 @@ export default function Home() {
     setModalState({ type: null });
   };
 
+  // Handle custom amount input change and real-time price calculation
+  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCustomAmount(value);
+
+    // Calculate price dynamically using the same rate as existing items (~$0.009 per star)
+    const amount = parseInt(value) || 0;
+    if (amount >= 1 && amount <= 30000) {
+      const price = Math.round(amount * 0.009 * 100); // Convert to cents for Telegram Stars pricing
+      setCustomPrice(price);
+
+      // Clear approval code if amount drops below 10,000
+      if (amount <= 10000) {
+        setApprovalCode('');
+        setIsApprovalCodeValid(false);
+      }
+    } else {
+      setCustomPrice(0);
+    }
+  };
+
+  // Handle custom purchase
+  const handleCustomPurchase = async () => {
+    const amount = parseInt(customAmount);
+    if (isNaN(amount) || amount < 1 || amount > 30000) {
+      alert('Please enter a valid amount between 1 and 30,000 stars');
+      return;
+    }
+
+    if (amount > 10000 && !isApprovalCodeValid) {
+      alert('For transactions above 10,000 stars, please enter the correct approval code!');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Create invoice link for custom amount through our API
+      const response = await fetch('/api/create-invoice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          customAmount: amount,
+          customPrice: customPrice,
+          userId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create invoice');
+      }
+
+      const { invoiceLink } = await response.json();
+      setIsLoading(false);
+
+      // Import TWA SDK
+      const WebApp = (await import('@twa-dev/sdk')).default;
+
+      // Open the invoice directly in the Mini App
+      WebApp.openInvoice(invoiceLink, async (status) => {
+        if (status === 'paid') {
+          // Payment was successful - webhook will handle balance update and payment record creation
+          console.log('Custom payment successful! Webhook will process balance update.');
+
+          // Show success message
+          alert(`✅ Payment successful! ${Number(amount).toLocaleString()} stars have been added to your balance.`);
+
+          // Clear the custom amount input
+          setCustomAmount('');
+          setCustomPrice(0);
+
+          // Refresh purchases and balance to show the updates from webhook
+          await fetchPurchases();
+          await fetchUserBalance();
+        } else if (status === 'failed') {
+          alert('❌ Payment failed. Please try again.');
+        } else if (status === 'cancelled') {
+          console.log('Payment was cancelled by user');
+        }
+      });
+
+    } catch (e) {
+      console.error('Error during custom purchase:', e);
+      alert(`Failed to process purchase: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      setIsLoading(false);
+    }
+  };
+
   // Loading state - only show for initialization, not for purchase history
   if (!initialized || isLoading) {
     return <LoadingState />;
@@ -639,11 +737,169 @@ export default function Home() {
             
             <h1 id="sampidia-store-heading" className="text-2xl font-bold mb-6 text-center">SamPidia Store</h1>
             
-            <ItemsList 
+            <ItemsList
               items={ITEMS}
               onPurchase={handlePurchase}
             />
-            
+
+            {/* Custom Amount Purchase Section */}
+            <div className="bg-gray-900 rounded-lg p-6 mb-8">
+              <h2 className="text-xl font-bold text-white mb-4 text-center">🎯 Custom Star(s) Amount</h2>
+              <p className="text-gray-300 text-sm mb-4 text-center">
+                Enter any amount of stars you want to sell
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex flex-col">
+                  <label htmlFor="customStars" className="text-white mb-2">
+                    Stars Amount:
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="customStars"
+                      type="number"
+                      value={customAmount}
+                      onChange={handleCustomAmountChange}
+                      min="1"
+                      max="30000"
+                      placeholder="Enter stars (1 - 30,000)"
+                      className="w-full px-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-yellow-500 pr-12"
+                    />
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-400 text-lg">
+                      ⭐
+                    </span>
+                  </div>
+
+                  {/* Real-time price display */}
+                  {customAmount && parseInt(customAmount) > 0 && (
+                    <div className="mt-2 p-3 bg-gray-800 rounded-lg">
+                      <p className="text-yellow-400 text-center font-semibold">
+                        ${(customPrice / 100).toFixed(2)} USD for {Number(customAmount).toLocaleString()} stars
+                      </p>
+                      <p className="text-gray-400 text-center text-sm mt-1">
+                        Rate: ${(0.009).toFixed(4)} per star
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Approval Code Input for Large Amounts */}
+                  {customAmount && parseInt(customAmount) > 10000 && (
+                    <div className="mt-2 space-y-3">
+                      {/* Warning message */}
+                      <div className="p-3 bg-yellow-600 rounded-lg border border-yellow-500">
+                        <p className="text-yellow-100 text-center font-medium">
+                          🔐 Approval Required for Large Transaction
+                        </p>
+                        <p className="text-yellow-100 text-center text-sm mt-1">
+                          Any transactions above 10,000 stars require approval code. Get approval code by clicking on SUPPORT button above.
+                        </p>
+                      </div>
+
+                      {/* Approval code input */}
+                      <div className="flex flex-col">
+                        <label htmlFor="approvalCode" className="text-white mb-2">
+                          Approval Code:
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="approvalCode"
+                            type="password"
+                            value={approvalCode}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const correctCode = process.env.NEXT_PUBLIC_APPROVAL_CODE || '2211'; // Fallback
+
+                              console.log('Approval Code Debug:', {
+                                enteredValue: value,
+                                expectedCode: correctCode,
+                                isValid: value === correctCode
+                              });
+
+                              setApprovalCode(value);
+                              setIsApprovalCodeValid(value === correctCode);
+                            }}
+                            placeholder="Enter approval code"
+                            className={`w-full px-4 py-3 bg-gray-800 text-white border rounded-lg focus:outline-none pr-12 ${
+                              approvalCode
+                                ? isApprovalCodeValid
+                                  ? 'border-green-500 focus:border-green-500'
+                                  : 'border-red-500 focus:border-red-500'
+                                : 'border-gray-700 focus:border-yellow-500'
+                            }`}
+                          />
+                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-lg">
+                            {approvalCode ? (
+                              isApprovalCodeValid ? (
+                                <span className="text-green-400">✓</span>
+                              ) : (
+                                <span className="text-red-400">✕</span>
+                              )
+                            ) : (
+                              <span className="text-gray-400">🔒</span>
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Approval code validation message */}
+                        {approvalCode && (
+                          <div className={`mt-2 p-2 rounded-lg text-center text-sm ${
+                            isApprovalCodeValid
+                              ? 'bg-green-600 text-green-100'
+                              : 'bg-red-600 text-red-100'
+                          }`}>
+                            {isApprovalCodeValid
+                              ? '✅ Approval code accepted - Purchase enabled'
+                              : '❌ Invalid approval code'
+                            }
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Error messages */}
+                  {customAmount && (parseInt(customAmount) < 1 || parseInt(customAmount) > 30000) && (
+                    <div className="mt-2 p-3 bg-red-600 rounded-lg border border-red-500">
+                      <p className="text-red-100 text-center font-medium">
+                        ❌ Invalid Amount
+                      </p>
+                      <p className="text-red-100 text-center text-sm mt-1">
+                        Please enter an amount between 1 and 30,000 stars
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleCustomPurchase}
+                  disabled={
+                    !customAmount ||
+                    parseInt(customAmount) < 1 ||
+                    parseInt(customAmount) > 30000 ||
+                    (parseInt(customAmount) > 10000 && !isApprovalCodeValid)
+                  }
+                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-all ${
+                    !customAmount || parseInt(customAmount) < 1 || parseInt(customAmount) > 30000
+                      ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                      : parseInt(customAmount) <= 10000
+                        ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
+                        : isApprovalCodeValid
+                          ? 'bg-green-500 hover:bg-green-600 text-white'
+                          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  {parseInt(customAmount || '0') > 10000
+                    ? isApprovalCodeValid
+                      ? '✅ Sell with Approval ⭐'
+                      : '❌ Approval Code Required'
+                    : 'Sell Custom Amount ⭐'
+                  }
+                </button>
+              </div>
+            </div>
+
+            <GoogleReviews />
+
             <PurchaseHistory
               purchases={purchases}
               items={ITEMS}

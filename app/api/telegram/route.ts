@@ -11,12 +11,12 @@ bot.command("start", (ctx) =>
   ctx.reply(
     `Welcome to SamPidia! 🌟 I am a bot that can accept payments via Telegram Stars. The following commands are available:
 
-/send1 - Sell 1 Star for $0.008
-/send25 - Sell 25 Stars for $0.2
-/send50 - Sell 50 Stars for $0.4
-/send100 - Sell 100 Stars for $0.8
-/send500 - Sell 500 Stars for $4
-/send1000 - Sell 1000 Stars for $8
+/send1 - Sell 1 Star for $0.009
+/send25 - Sell 25 Stars for $0.225
+/send50 - Sell 50 Stars for $0.45
+/send100 - Sell 100 Stars for $0.9
+/send500 - Sell 500 Stars for $4.5
+/send1000 - Sell 1000 Stars for $9
 /balance - Check your current balance
 /withdraw - Withdraw your balance
 /refund - Request a refund for a purchase
