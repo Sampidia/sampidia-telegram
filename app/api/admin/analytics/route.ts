@@ -14,13 +14,17 @@ export async function GET() {
     // Get total withdrawals
     const totalResult = await prisma.withdrawal.aggregate({
       _sum: { amount: true },
+      where: {
+        status: 'COMPLETED'
+      }
     });
 
     // Get last 24 hours withdrawals
     const last24HoursResult = await prisma.withdrawal.aggregate({
       _sum: { amount: true },
       where: {
-        createdAt: { gte: last24Hours }
+        createdAt: { gte: last24Hours },
+        status: 'COMPLETED'
       }
     });
 
@@ -28,7 +32,8 @@ export async function GET() {
     const thisMonthResult = await prisma.withdrawal.aggregate({
       _sum: { amount: true },
       where: {
-        createdAt: { gte: thisMonth }
+        createdAt: { gte: thisMonth },
+        status: 'COMPLETED'
       }
     });
 
@@ -36,7 +41,8 @@ export async function GET() {
     const last3MonthsResult = await prisma.withdrawal.aggregate({
       _sum: { amount: true },
       where: {
-        createdAt: { gte: last3Months }
+        createdAt: { gte: last3Months },
+        status: 'COMPLETED'
       }
     });
 

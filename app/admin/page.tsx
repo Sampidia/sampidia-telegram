@@ -264,7 +264,7 @@ export default function AdminDashboard() {
             <div className="text-3xl font-bold text-yellow-400 mb-2">
               {stats.total.toLocaleString()} ⭐
             </div>
-            <p className="text-gray-400 text-sm">${(stats.total * 0.09).toFixed(2)} USD</p>
+            <p className="text-gray-400 text-sm">${(stats.total * 0.009).toFixed(2)} USD</p>
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -275,7 +275,7 @@ export default function AdminDashboard() {
             <div className="text-3xl font-bold text-green-400 mb-2">
               {stats.last24Hours.toLocaleString()} ⭐
             </div>
-            <p className="text-gray-400 text-sm">${(stats.last24Hours * 0.09).toFixed(2)} USD</p>
+            <p className="text-gray-400 text-sm">${(stats.last24Hours * 0.009).toFixed(2)} USD</p>
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -286,7 +286,7 @@ export default function AdminDashboard() {
             <div className="text-3xl font-bold text-blue-400 mb-2">
               {stats.thisMonth.toLocaleString()} ⭐
             </div>
-            <p className="text-gray-400 text-sm">${(stats.thisMonth * 0.09).toFixed(2)} USD</p>
+            <p className="text-gray-400 text-sm">${(stats.thisMonth * 0.009).toFixed(2)} USD</p>
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -297,7 +297,7 @@ export default function AdminDashboard() {
             <div className="text-3xl font-bold text-purple-400 mb-2">
               {stats.last3Months.toLocaleString()} ⭐
             </div>
-            <p className="text-gray-400 text-sm">${(stats.last3Months * 0.09).toFixed(2)} USD</p>
+            <p className="text-gray-400 text-sm">${(stats.last3Months * 0.009).toFixed(2)} USD</p>
           </div>
         </div>
 
@@ -410,23 +410,21 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
                         onClick={() => handleWithdrawalClick(withdrawal)}
-                        className={`px-3 py-1 text-xs rounded-full font-semibold capitalize ${
-                          withdrawal.withdrawMethod === 'bank'
+                        className={`px-3 py-1 text-xs rounded-full font-semibold capitalize ${withdrawal.withdrawMethod === 'bank'
                             ? 'bg-blue-600 text-white hover:bg-blue-700'
                             : 'bg-purple-600 text-white hover:bg-purple-700'
-                        }`}
+                          }`}
                       >
                         {withdrawal.withdrawMethod === 'bank' ? '🏦 ' : '💎 '}{withdrawal.withdrawMethod}
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full font-semibold ${
-                        withdrawal.status === 'PENDING'
+                      <span className={`px-2 py-1 text-xs rounded-full font-semibold ${withdrawal.status === 'PENDING'
                           ? 'bg-yellow-600 text-white'
                           : withdrawal.status === 'COMPLETED'
-                          ? 'bg-green-600 text-white'
-                          : 'bg-red-600 text-white'
-                      }`}>
+                            ? 'bg-green-600 text-white'
+                            : 'bg-red-600 text-white'
+                        }`}>
                         {withdrawal.status}
                       </span>
                     </td>
@@ -445,6 +443,12 @@ export default function AdminDashboard() {
                         className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"
                       >
                         🔄 Pend
+                      </button>
+                      <button
+                        onClick={() => handleStatusUpdate(withdrawal.id, 'FAILED')}
+                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
+                      >
+                        ❌ Fail
                       </button>
                     </td>
                   </tr>
@@ -472,10 +476,9 @@ export default function AdminDashboard() {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-300">Status:</span>
-                <span className={`px-2 py-1 text-xs rounded-full font-semibold ${
-                  selectedWithdrawal.status === 'PENDING' ? 'bg-yellow-600' :
-                  selectedWithdrawal.status === 'COMPLETED' ? 'bg-green-600' : 'bg-red-600'
-                }`}>
+                <span className={`px-2 py-1 text-xs rounded-full font-semibold ${selectedWithdrawal.status === 'PENDING' ? 'bg-yellow-600' :
+                    selectedWithdrawal.status === 'COMPLETED' ? 'bg-green-600' : 'bg-red-600'
+                  }`}>
                   {selectedWithdrawal.status}
                 </span>
               </div>
@@ -490,7 +493,7 @@ export default function AdminDashboard() {
                 <div className="flex justify-between mt-1">
                   <span className="text-gray-400 text-sm">USD Value:</span>
                   <span className="text-yellow-300 text-sm">
-                    ${(selectedWithdrawal.amount * 0.09).toFixed(2)}
+                    ${(selectedWithdrawal.amount * 0.009).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -548,6 +551,12 @@ export default function AdminDashboard() {
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors"
                 >
                   🔄 Set to Pending
+                </button>
+                <button
+                  onClick={() => handleStatusUpdate(selectedWithdrawal.id, 'FAILED')}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors"
+                >
+                  ❌ Mark as Failed
                 </button>
               </div>
             </div>
