@@ -11,7 +11,11 @@ const port = 3001;
 app.use(express.json());
 
 // Create an instance of the `Bot` class and pass your bot token to it.
-const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
+const token = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN || "";
+if (!token) {
+  console.warn("WARNING: No bot token found in environment variables!");
+}
+const bot = new Bot(token);
 
 /*
   Handles the /start command.
@@ -19,7 +23,7 @@ const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "
 */
 bot.command("start", async (ctx) => {
   const startParam = ctx.match;
-  
+
   // Handle payment commands from web app
   if (startParam && startParam.startsWith('pay_')) {
     const parts = startParam.split('_');
@@ -29,7 +33,7 @@ bot.command("start", async (ctx) => {
       return;
     }
   }
-  
+
   // Regular start command
   ctx.reply(
     `Welcome to SamPidia! 🌟 I am a bot that can accept payments via Telegram Stars. The following commands are available:
@@ -53,7 +57,7 @@ async function handlePaymentRequest(ctx: any, itemId: string, userId: string) {
     // Get item details
     const { ITEMS } = await import('./app/data/items');
     const item = ITEMS.find(i => i.id === itemId);
-    
+
     if (!item) {
       await ctx.reply('❌ Item not found. Please try again.');
       return;
@@ -63,7 +67,7 @@ async function handlePaymentRequest(ctx: any, itemId: string, userId: string) {
     const payment = await ctx.replyWithInvoice(
       item.name,
       item.description,
-      JSON.stringify({ 
+      JSON.stringify({
         itemId: item.id,
         userId: userId
       }),
@@ -84,9 +88,9 @@ const createInvoice = (ctx: any, itemName: string, itemDescription: string, amou
   return ctx.replyWithInvoice(
     itemName,
     itemDescription,
-    JSON.stringify({ 
+    JSON.stringify({
       itemId: itemName.toLowerCase().replace(/\s+/g, ''),
-      userId: ctx.from?.id 
+      userId: ctx.from?.id
     }),
     "", // Provider token (empty for Telegram Stars)
     "XTR", // Currency for Telegram Stars
@@ -225,11 +229,11 @@ bot.command("balance", async (ctx) => {
     }
 
     const telegramId = ctx.from.id.toString();
-    
+
     const user = await prisma.user.findUnique({
       where: { telegramId: telegramId },
     });
-    
+
     const balance = user?.balance || 0;
     await ctx.reply(`💰 Your current balance: ${balance} Stars`);
   } catch (error) {

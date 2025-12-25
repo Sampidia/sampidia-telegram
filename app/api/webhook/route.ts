@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Bot, webhookCallback } from "grammy";
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
 
@@ -16,51 +19,123 @@ bot.on("pre_checkout_query", (ctx) => {
 // Create webhook handler
 const handler = webhookCallback(bot, "next-js");
 
+// Detailed logging for debugging
+const logUpdate = (update: any) => {
+  console.log('--- Telegram Update ---');
+  if (update.message) {
+    if (update.message.text) console.log(`Text: ${update.message.text}`);
+    if (update.message.successful_payment) console.log('Payment: Received');
+    console.log(`From: ${update.message.from?.id} (${update.message.from?.username || 'no username'})`);
+  }
+  if (update.pre_checkout_query) console.log('Pre-checkout query: Received');
+  console.log('----------------------');
+};
+
+bot.on("message:successful_payment", async (ctx) => {
+  if (!ctx.message || !ctx.message.successful_payment || !ctx.from) {
+    return;
+  }
+
+  try {
+    const payment = ctx.message.successful_payment;
+    const payload = JSON.parse(payment.invoice_payload || '{}');
+    const telegramId = ctx.from.id.toString();
+    const amount = payment.total_amount || 0;
+
+    console.log(`Processing payment for user ${telegramId}, amount: ${amount}`);
+
+    // Check if payment already exists to prevent double processing
+    const existingPayment = await prisma.payment.findUnique({
+      where: { transactionId: payment.telegram_payment_charge_id }
+    });
+
+    if (existingPayment) {
+      console.log('Payment already processed, skipping.');
+      await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+      return;
+    }
+
+    // First, ensure user exists and get their ID
+    const user = await prisma.user.upsert({
+      where: { telegramId: telegramId },
+      update: {
+        balance: { increment: amount },
+        lastSeenAt: new Date()
+      },
+      create: {
+        telegramId: telegramId,
+        firstName: ctx.from.first_name || '',
+        username: ctx.from.username || '',
+        balance: amount,
+        lastSeenAt: new Date()
+      }
+    });
+
+    // Store payment in database using the user's ID
+    await prisma.payment.create({
+      data: {
+        userId: user.id,
+        telegramId: telegramId,
+        transactionId: payment.telegram_payment_charge_id,
+        productName: amount ? `${amount} Stars` : 'Stars',
+        itemId: payload.itemId || 'unknown',
+        amount: amount,
+        status: "COMPLETED",
+      },
+    });
+
+    console.log('Payment record created successfully');
+    await ctx.reply(`✅ Payment successful! You've purchased ${amount} Stars. Your balance has been updated.`);
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    await ctx.reply(`✅ Payment received! We're processing your purchase and will update your balance shortly.`);
+  }
+});
+
 export async function POST(req: NextRequest) {
   try {
-    console.log('=== WEBHOOK REQUEST RECEIVED ===');
-    const body = await req.json();
-    console.log('Request body:', JSON.stringify(body, null, 2));
+    const update = await req.json();
+    logUpdate(update);
 
-    const headers = Object.fromEntries(req.headers.entries());
-    console.log('Request headers:', headers);
+    // grammY's webhookCallback for next-js expects a request-like object
+    // and a response-like object. Next.js 15 App Router handles this differently,
+    // so we use the mockRes approach but ensure it's compatible.
 
     let responseStatus = 200;
     let responseBody: any = {};
 
     const mockRes = {
-      end: (cb?: () => void) => { if (cb) cb(); },
-      status: (code: number) => { responseStatus = code; return mockRes; },
-      json: (json: any) => { responseBody = json; return mockRes; },
-      send: (json: any) => { responseBody = json; return mockRes; },
+      status: (code: number) => {
+        responseStatus = code;
+        return mockRes;
+      },
+      json: (data: any) => {
+        responseBody = data;
+        return mockRes;
+      },
+      end: (data?: any) => {
+        if (data && typeof data === 'string') {
+          try {
+            responseBody = JSON.parse(data);
+          } catch {
+            responseBody = data;
+          }
+        }
+        return mockRes;
+      },
+      send: (data: any) => {
+        responseBody = data;
+        return mockRes;
+      }
     };
 
-    await handler({ body, headers }, mockRes as any);
+    // Pass the raw body and headers to grammY
+    await handler(req as any, mockRes as any);
 
-    console.log('=== WEBHOOK RESPONSE ===');
-    console.log('Status:', responseStatus);
-    console.log('Body:', responseBody);
-
-    const finalResponse = NextResponse.json(responseBody, { status: responseStatus });
-
-    // Add security headers to POST responses as well
-    finalResponse.headers.set('X-Content-Type-Options', 'nosniff');
-    finalResponse.headers.set('X-Frame-Options', 'DENY');
-    finalResponse.headers.set('X-XSS-Protection', '1; mode=block');
-    finalResponse.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    finalResponse.headers.set('Content-Security-Policy',
-      "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline'; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data: https:; " +
-      "connect-src 'self' https://api.telegram.org; " +
-      "frame-ancestors 'none';"
-    );
-
-    return finalResponse;
+    return NextResponse.json(responseBody, { status: responseStatus });
   } catch (error) {
-    console.error('Webhook error:', error);
-    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
+    console.error('Webhook Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
