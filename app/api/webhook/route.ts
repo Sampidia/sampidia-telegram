@@ -5,13 +5,15 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
+if (!process.env.BOT_TOKEN && !process.env.TELEGRAM_BOT_TOKEN) {
+  console.error('❌ CRITICAL: No bot token found in environment variables!');
+}
 
 // Attach all command handlers and logic from shared file
 import { setupBot } from "@/lib/bot-logic";
 setupBot(bot);
 
-// Create webhook handler
-const handler = webhookCallback(bot, "next-js");
+// Note: No longer using webhookCallback for App Router
 
 // Detailed logging for debugging
 const logUpdate = (update: any) => {
@@ -30,45 +32,16 @@ export async function POST(req: NextRequest) {
     const update = await req.json();
     logUpdate(update);
 
-    // grammY's webhookCallback for next-js expects a request-like object
-    // and a response-like object. Next.js 15 App Router handles this differently,
-    // so we use the mockRes approach but ensure it's compatible.
+    // Using handleUpdate directly is more reliable in serverless environments
+    // where we've already consumed the request body.
+    await bot.handleUpdate(update);
 
-    let responseStatus = 200;
-    let responseBody: any = {};
-
-    const mockRes = {
-      status: (code: number) => {
-        responseStatus = code;
-        return mockRes;
-      },
-      json: (data: any) => {
-        responseBody = data;
-        return mockRes;
-      },
-      end: (data?: any) => {
-        if (data && typeof data === 'string') {
-          try {
-            responseBody = JSON.parse(data);
-          } catch {
-            responseBody = data;
-          }
-        }
-        return mockRes;
-      },
-      send: (data: any) => {
-        responseBody = data;
-        return mockRes;
-      }
-    };
-
-    // Pass the raw body and headers to grammY
-    await handler(req as any, mockRes as any);
-
-    return NextResponse.json(responseBody, { status: responseStatus });
+    return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {
     console.error('Webhook Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    // Always return 200 to Telegram unless it's a critical infrastructure failure
+    // so it doesn't keep retrying failed updates indefinitely.
+    return NextResponse.json({ error: 'Internal error' }, { status: 200 });
   }
 }
 
