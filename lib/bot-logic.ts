@@ -168,8 +168,7 @@ async function handlePaymentRequest(ctx: any, itemId: string, userId: string) {
             item.name,
             item.description,
             JSON.stringify({ itemId: item.id, userId: userId }),
-            "", // Provider token
-            "XTR", // Telegram Stars
+            "XTR", // Telegram Stars currency
             [{ amount: item.price, label: item.name }]
         );
     } catch (error) {
@@ -186,7 +185,6 @@ function createInvoice(ctx: any, itemName: string, itemDescription: string, amou
             itemId: itemName.toLowerCase().replace(/\s+/g, ''),
             userId: ctx.from?.id
         }),
-        "",
         "XTR",
         [{ amount: amount, label: itemName }],
     );
