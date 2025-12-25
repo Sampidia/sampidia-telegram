@@ -32,6 +32,11 @@ export async function POST(req: NextRequest) {
     const update = await req.json();
     logUpdate(update);
 
+    // Initialize bot if not already done (required when using handleUpdate directly)
+    if (!bot.isInited()) {
+      await bot.init();
+    }
+
     // Using handleUpdate directly is more reliable in serverless environments
     // where we've already consumed the request body.
     await bot.handleUpdate(update);
