@@ -13,6 +13,7 @@ import WithdrawalHistory from '@/app/components/WithdrawalHistory';
 import PurchaseSuccessModal from '@/app/components/PurchaseSuccessModal';
 import WithdrawalInstructionsModal from '@/app/components/WithdrawalInstructionsModal';
 import GoogleReviews from '@/app/components/TrustpilotReviews';
+import { PaymentWarningCard } from '@/app/components/PaymentWarningCard';
 
 export default function Home() {
   const [initialized, setInitialized] = useState(true); // Force initialized to true
@@ -565,6 +566,9 @@ export default function Home() {
               <h2 className="text-2xl font-bold mb-2">Welcome back {userFirstName}!</h2>
               <p className="text-lg">Your Telegram ID: {userTelegramId}</p>
             </div>
+
+            {/* Payment Processing Warning Card */}
+            <PaymentWarningCard />
 
             {/* User Balance Display */}
             <div className="flex flex-col items-center justify-center mb-4 p-3 bg-gray-800 rounded-lg">
