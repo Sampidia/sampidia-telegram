@@ -4,16 +4,22 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const bot = new Bot(process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "");
-if (!process.env.BOT_TOKEN && !process.env.TELEGRAM_BOT_TOKEN) {
-  console.error('❌ CRITICAL: No bot token found in environment variables!');
+// Lazy singleton — bot is created on first request, NOT at module load / build time.
+// This avoids the "Empty token!" crash when BOT_TOKEN is absent during Next.js build.
+let _bot: Bot | null = null;
+
+function getBot(): Bot {
+  if (!_bot) {
+    const token = process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "";
+    if (!token) {
+      throw new Error("❌ CRITICAL: No bot token found in environment variables!");
+    }
+    _bot = new Bot(token);
+    // Attach all command handlers and logic from shared file
+    import("@/lib/bot-logic").then(({ setupBot }) => setupBot(_bot!));
+  }
+  return _bot;
 }
-
-// Attach all command handlers and logic from shared file
-import { setupBot } from "@/lib/bot-logic";
-setupBot(bot);
-
-// Note: No longer using webhookCallback for App Router
 
 // Detailed logging for debugging
 const logUpdate = (update: any) => {
@@ -31,6 +37,8 @@ export async function POST(req: NextRequest) {
   try {
     const update = await req.json();
     logUpdate(update);
+
+    const bot = getBot();
 
     // Initialize bot if not already done (required when using handleUpdate directly)
     if (!bot.isInited()) {
@@ -58,11 +66,11 @@ export async function GET(req: NextRequest) {
     try {
       const webhookUrl = process.env.WEBHOOK_URL || 'https://sampidia-telegram.vercel.app/api/webhook';
 
-      await bot.api.setWebhook(webhookUrl, {
+      await getBot().api.setWebhook(webhookUrl, {
         allowed_updates: ["message", "pre_checkout_query"]
       });
 
-      const webhookInfo = await bot.api.getWebhookInfo();
+      const webhookInfo = await getBot().api.getWebhookInfo();
 
       return NextResponse.json({
         success: true,
