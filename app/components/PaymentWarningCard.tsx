@@ -2,17 +2,46 @@ import React from 'react';
 
 export const PaymentWarningCard: React.FC = () => {
   return (
-    <div className="mb-4 p-4 bg-amber-950/60 border border-amber-500/40 rounded-lg text-amber-200 shadow-md">
-      <div className="flex items-start space-x-3">
-        <span className="text-xl flex-shrink-0 mt-0.5" role="img" aria-label="warning">⚠️</span>
-        <div>
-          <h3 className="text-sm font-semibold text-amber-400 mb-1">
-            Important Payment Processing Notice
-          </h3>
-          <p className="text-xs text-amber-200/90 leading-relaxed">
-            Payments are processed on the <strong className="text-amber-300 underline underline-offset-2">22nd day</strong> after star deposit to prevent refund fraud.
-          </p>
-        </div>
+    <div
+      style={{
+        marginBottom: '1rem',
+        padding: '12px 16px',
+        backgroundColor: '#2d1a00',
+        border: '1px solid #d97706',
+        borderRadius: '10px',
+        boxShadow: '0 2px 8px rgba(217, 119, 6, 0.15)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '10px',
+      }}
+    >
+      <span style={{ fontSize: '18px', flexShrink: 0, marginTop: '1px' }} role="img" aria-label="warning">
+        ⚠️
+      </span>
+      <div>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '13px',
+            fontWeight: 600,
+            color: '#fbbf24',
+            marginBottom: '4px',
+          }}
+        >
+          Important Payment Processing Notice
+        </p>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '12px',
+            color: '#fde68a',
+            lineHeight: '1.5',
+          }}
+        >
+          Payments are processed on the{' '}
+          <strong style={{ color: '#fcd34d', textDecoration: 'underline' }}>22nd day</strong>{' '}
+          after star deposit to prevent refund fraud.
+        </p>
       </div>
     </div>
   );
