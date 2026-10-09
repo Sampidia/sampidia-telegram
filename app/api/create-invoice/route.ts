@@ -2,10 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Bot } from "grammy";
 
-// Create bot instance for creating invoice links
-const botToken = process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "";
-const bot = new Bot(botToken);
-
 export async function POST(req: NextRequest) {
   try {
     const { itemId, userId, customAmount, customPrice } = await req.json();
@@ -60,6 +56,14 @@ export async function POST(req: NextRequest) {
       priceLabel = item.name;
       priceAmount = item.price;
     }
+
+    // Create bot instance at request time (not module level) to avoid build-time "Empty token!" error
+    const botToken = process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || "";
+    if (!botToken) {
+      console.error("❌ CRITICAL: No bot token found in environment variables!");
+      return NextResponse.json({ error: "Bot token not configured" }, { status: 500 });
+    }
+    const bot = new Bot(botToken);
 
     // Create invoice link using Telegram's createInvoiceLink method
     const invoiceLink = await bot.api.createInvoiceLink(
